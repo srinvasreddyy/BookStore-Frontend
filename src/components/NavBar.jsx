@@ -86,7 +86,7 @@ const NavBar = () => {
                   placeholder="What are you looking for?"
                   className="flex-1 px-4 py-0 text-xs bg-neutral-50 outline-none"
                 />
-                <button className="h-8 px-3 bg-black text-white text-xs flex items-center gap-2">
+                <button className="h-8 px-3 bg-neutral-900 text-white text-xs flex items-center gap-2">
                   <IoSearch className="text-xs"/>
                   <span className="hidden sm:inline font-semibold">Search</span>
                 </button>
@@ -99,7 +99,7 @@ const NavBar = () => {
             <button className="hidden md:inline text-xs uppercase font-semibold px-4 py-2 rounded-md">
               Discover
             </button>
-            <button className="hidden md:inline bg-black text-white text-xs uppercase font-semibold px-10 py-2 rounded-md">
+            <button className="hidden md:inline bg-neutral-900 text-white text-xs uppercase font-semibold px-10 py-2 rounded-md">
               Login
             </button>
             <button className="text-xl text-neutral-700">
@@ -153,7 +153,7 @@ const NavBar = () => {
               placeholder="What are you looking for?"
               className="flex-1 px-4 py-0 text-xs bg-neutral-50 outline-none"
             />
-            <button className="h-8 px-3 bg-black text-white text-xs flex items-center gap-2">
+            <button className="h-8 px-3 bg-neutral-900 text-white text-xs flex items-center gap-2">
               <IoSearch className="text-xs"/>
               <span className="hidden sm:inline font-semibold">Search</span>
             </button>
