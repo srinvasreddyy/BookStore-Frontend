@@ -75,7 +75,7 @@ const BestPublications = () => {
     <section className="py-10 px-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-xs font-semibold text-neutral-500 uppercase">Best sellers</p>
+          <p className="text-xs font-bold text-neutral-500 max-lg:text-[9px] uppercase">Best sellers</p>
           <h3 className="text-2xl max-lg:text-lg font-bold">Best Publications</h3>
         </div>
         <div className="flex items-center gap-4">
@@ -105,7 +105,7 @@ const BestPublications = () => {
                   <button
                     onClick={() => addToCart(book.id)}
                     disabled={added.includes(book.id)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition ${added.includes(book.id) ? 'bg-gray-300 text-gray-700 cursor-default' : 'bg-black text-white hover:bg-neutral-800'}`}
+                    className={`px-4 py-2  max-lg:px-3  rounded-md text-xs font-medium transition ${added.includes(book.id) ? 'bg-gray-300 text-gray-700 cursor-default' : 'bg-black text-white hover:bg-neutral-800'}`}
                   >
                     {added.includes(book.id) ? 'Added' : 'Add to Cart'}
                   </button>
