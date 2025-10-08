@@ -1,0 +1,10 @@
+@import "tailwindcss";
+.font-zs{
+   font-family: "Zalando Sans", sans-serif;
+}
+.font-lora{
+    font-family: "Lora", serif;
+}
+*{
+   font-family: "Inter", sans-serif;
+}
