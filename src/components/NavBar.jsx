@@ -8,28 +8,36 @@ import { Link } from "@tanstack/react-router";
 import SearchOverlay from "./SearchOverlay"; // Import the new component
 
 const CATEGORIES = [
-  "All", "Fiction", "Non-fiction", "Sci-fi", "Fantasy", "Children",
-  "Biographies", "Self-help", "Business", "Comics",
+  "All",
+  "Fiction",
+  "Non-fiction",
+  "Sci-fi",
+  "Fantasy",
+  "Children",
+  "Biographies",
+  "Self-help",
+  "Business",
+  "Comics",
 ];
 
 const MENU_ITEMS = [
-  { label: "Discover", href: "#discover" },
-  { label: "Other Products", href: "#other-products" },
-  { label: "Grow with us", href: "#grow" },
-  { label: "Coaching Institutes", href: "#coaching" },
-  { label: "Media Coverage", href: "#media" },
-  { label: "Free Content", href: "#free" },
-  { label: "Blogs", href: "#blogs" },
+  { label: "Discover", href: "/discover" },
+  { label: "Other Products", href: "/other-products" },
+  { label: "Grow with us", href: "/grow" },
+  { label: "About Us", href: "/about" },
+  { label: "Media Coverage", href: "/media" },
+  { label: "Free Content", href: "/free" },
+  { label: "Blogs", href: "/blogs" },
 ];
 
 const NavBar = () => {
   const [openStrip, setOpenStrip] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); // State for search overlay
-  
+
   const stripRef = useRef(null);
   const menuRef = useRef(null);
-  
+
   // A cleaner useEffect hook for closing modals
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -40,15 +48,15 @@ const NavBar = () => {
         setMobileMenuOpen(false);
       }
     };
-    
+
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         setOpenStrip(false);
         setMobileMenuOpen(false);
-        setIsSearchOpen(false); // Also close search on Escape
+        setIsSearchOpen(false);
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -56,20 +64,15 @@ const NavBar = () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
-  
-  // Prevent body scroll when the search overlay is open
+
+  // Prevent body scroll when search overlay is open
   useEffect(() => {
-    if (isSearchOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
+    document.body.style.overflow = isSearchOpen ? "hidden" : "auto";
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
     };
   }, [isSearchOpen]);
 
-  // This is a button that looks like your search input to trigger the overlay
   const SearchTriggerButton = ({ className }) => (
     <button
       onClick={() => setIsSearchOpen(true)}
@@ -96,12 +99,15 @@ const NavBar = () => {
               <div className="text-2xl text-black">
                 <TbCircleLetterBFilled />
               </div>
-              <a href="/" className="font-extrabold tracking-tight text-neutral-900 uppercase">
+              <a
+                href="/"
+                className="font-extrabold tracking-tight text-neutral-900 uppercase"
+              >
                 Bookstore
               </a>
             </div>
 
-            {/* Desktop Search Trigger */}
+            {/* Desktop Search */}
             <div className="flex-1 max-lg:hidden flex justify-center px-4">
               <div className="w-8/12">
                 <SearchTriggerButton className="w-full" />
@@ -110,33 +116,71 @@ const NavBar = () => {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-              <Link to="/register" className="hidden md:inline text-xs uppercase font-semibold px-4 py-2 rounded-md">
+              <Link
+                to="/register"
+                className="hidden md:inline text-xs uppercase font-semibold px-4 py-2 rounded-md"
+              >
                 Register
               </Link>
-              <Link to="/login" className="hidden md:inline bg-neutral-900 text-white text-xs uppercase font-semibold px-10 py-2 rounded-md">
+              <Link
+                to="/login"
+                className="hidden md:inline bg-neutral-900 text-white text-xs uppercase font-semibold px-10 py-2 rounded-md"
+              >
                 Login
               </Link>
-              <Link to="/cart" className="text-xl text-neutral-700 hover:text-neutral-900 transition-colors" aria-label="Cart">
+              <Link
+                to="/cart"
+                className="text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
+                aria-label="Cart"
+              >
                 <LuShoppingBag />
               </Link>
 
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden ml-2 p-2 text-neutral-700 hover:bg-neutral-100 rounded-md"
-                aria-expanded={mobileMenuOpen}
-                aria-label="Toggle menu"
-              >
-                {mobileMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
-              </button>
+              {/* Mobile Menu */}
+              <div className="relative md:hidden" ref={menuRef}>
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="ml-2 p-2 text-neutral-700 hover:bg-neutral-100 rounded-md"
+                  aria-expanded={mobileMenuOpen}
+                  aria-label="Toggle menu"
+                >
+                  {mobileMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+                </button>
+
+                {mobileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-neutral-200 z-50 py-2">
+                    <Link
+                      to="/login"
+                      className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Register
+                    </Link>
+                    <a
+                      href="#about"
+                      className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      About
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Mobile Search Trigger */}
+        {/* Mobile Search */}
         <div className="flex-1 lg:hidden flex justify-center px-2">
           <div className="w-full mb-3">
-             <SearchTriggerButton className="w-full"/>
+            <SearchTriggerButton className="w-full" />
           </div>
         </div>
 
@@ -157,7 +201,11 @@ const NavBar = () => {
                   <div className="absolute mt-2 w-56 bg-white text-neutral-900 rounded-md shadow-lg border border-neutral-200 z-40">
                     <div className="p-2 grid grid-cols-1 gap-1">
                       {CATEGORIES.map((cat) => (
-                        <a key={cat} href="#" className="block px-3 py-2 text-sm rounded hover:bg-neutral-100" onClick={() => setOpenStrip(false)}>
+                        <a
+                          key={cat}
+                          href={`/products/${cat.toLowerCase()}`}                          className="block px-3 py-2 text-sm rounded hover:bg-neutral-100"
+                          onClick={() => setOpenStrip(false)}
+                        >
                           {cat}
                         </a>
                       ))}
@@ -167,7 +215,11 @@ const NavBar = () => {
               </div>
               <nav className="max-lg:hidden">
                 {MENU_ITEMS.map((menu) => (
-                  <a key={menu.label} href={menu.href} className="ml-6 text-xs font-semibold hover:underline">
+                  <a
+                    key={menu.label}
+                    href={menu.href}
+                    className="ml-6 text-xs font-semibold hover:underline"
+                  >
                     {menu.label}
                   </a>
                 ))}
@@ -177,7 +229,7 @@ const NavBar = () => {
         </div>
       </header>
 
-      {/* Conditionally render the Search Overlay */}
+      {/* Search Overlay */}
       {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
     </>
   );

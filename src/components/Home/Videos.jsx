@@ -86,8 +86,8 @@ const Videos = () => {
   }
 
   return (
-    <section className="py-10 px-4 md:px-8 bg-gray-50">
-      <div className="max-w-6xl mx-auto">
+    <section className="py-10 px-4 md:px-8 bg-white">
+      <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl font-bold max-lg:text-2xl max-lg:mb-1 mb-4 text-gray-800">Short Videos</h2>
         <p className="text-gray-600 mb-6  max-lg:text-xs">Quick previews and short clips from our bookstore.</p>
 
