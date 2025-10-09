@@ -189,8 +189,8 @@ const ProductsByCategory = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{categoryName} Books</h1>
-          <p className="text-gray-600">{products.length} products found</p>
+          <h1 className="text-3xl max-lg:text-xl font-bold text-gray-900 mb-2">{categoryName} Books</h1>
+          <p className="text-gray-600 max-lg:text-xs text-sm">{products.length} products found</p>
         </div>
 
         {/* Filters & View Controls */}

@@ -38,12 +38,11 @@ const CATEGORIES = [
     image:
       "https://images.unsplash.com/photo-1695774165691-8a01a6045952?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
- 
 ];
 
 const CategoryCards = () => {
   return (
-    <div className="w-full  max-w-7xl h-fit mx-auto px-4 sm:px-6 py-14 max-lg:py-8  lg:px-8 ">
+    <div className="w-full max-w-7xl h-fit mx-auto px-4 sm:px-6 py-14 max-lg:py-8 lg:px-8">
       <div>
         <p className="font-bold text-neutral-500 max-lg:text-[9px] uppercase text-xs">
           Discover
@@ -53,26 +52,40 @@ const CategoryCards = () => {
         </h2>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-        {CATEGORIES.map((category) => {
-          return (
-            <Link
-              key={category.slug}
-              to="/products/$category"
-              params={{ category: category.slug }}
-              className="relative h-60 max-lg:h-50 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
-            >
-              <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
+        {CATEGORIES.map((category) => (
+          <Link
+            key={category.slug}
+            to="/products/$category"
+            params={{ category: category.slug }}
+            // The 'group' class is key for the hover effects on child elements
+            className="relative group h-60 max-lg:h-48 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out"
+          >
+            <img
+              src={category.image}
+              alt={category.name}
+              // Image zooms in on hover of the parent 'group'
+              className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
+            />
+            
+            {/* Dark overlay for text readability, darkens on hover */}
+            <div className="absolute inset-0 bg-black/50 bg-opacity-40 group-hover:bg-opacity-60 transition-all duration-300"></div>
 
-              {/* bottom panel with name and Order Now button */}
-              <div className="absolute bottom-0 left-0 right-0 bg-white px-3 py-3 flex flex-col items-center gap-2">
-                <div className="text-sm font-semibold text-black">{category.name}</div>
-                <button className="text-xs bg-black text-white w-full py-2 font-semibold rounded-md hover:bg-neutral-800 transition">
-                  Order Now
-                </button>
-              </div>
-            </Link>
-          );
-        })}
+            {/* Centered content container */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+              <h3 
+                className="text-white text-2xl font-bold tracking-wide transform transition-transform duration-300 group-hover:scale-105"
+              >
+                {category.name}
+              </h3>
+              <p 
+                // This text fades in on hover
+                className="max-lg:hidden text-white text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              >
+                Shop Now
+              </p>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

@@ -154,6 +154,7 @@ const SingleProduct = () => {
                   Add to Cart
                 </a>
                 <a
+                href="/cart"
                   className="w-full h-12 flex items-center justify-center rounded-lg bg-black text-white font-bold hover:opacity-90 transition-opacity"
                 >
                   Buy Now
