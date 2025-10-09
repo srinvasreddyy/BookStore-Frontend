@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import React, { useState } from 'react';
 import { FiMinus, FiPlus, FiTrash2 } from 'react-icons/fi';
 
@@ -51,60 +52,63 @@ const Cart = () => {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:py-10">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6">Shopping Cart</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-800">Shopping Cart</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Cart Items (Left Side) */}
-          <div className="lg:col-span-8 space-y-3">
+          <div className="lg:col-span-8 space-y-4">
             {cartItems.length === 0 ? (
-              <div className="bg-white rounded-lg p-6 text-center">
-                <p className="text-gray-500">Your cart is empty</p>
-                <button className="mt-3 px-5 py-2 bg-black text-white rounded-lg hover:bg-gray-800 text-sm">
+              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+                <p className="text-gray-500 text-lg">Your cart is empty.</p>
+                <Link to="/" className="inline-block mt-4 px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 text-sm font-semibold transition-colors">
                   Continue Shopping
-                </button>
+                </Link>
               </div>
             ) : (
               cartItems.map(item => (
-                <div key={item.id} className="bg-white rounded-lg p-3 sm:p-4 flex items-center gap-3 sm:gap-4 shadow-sm">
+                <div key={item.id} className="bg-white rounded-lg p-3 sm:p-4 flex items-center gap-3 sm:gap-4  border border-neutral-300">
                   {/* Book Image */}
                   <div className="w-16 h-24 sm:w-20 sm:h-28 flex-shrink-0">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-full object-cover rounded"
+                      className="w-full h-full object-cover rounded-md"
                     />
                   </div>
 
                   {/* Book Details */}
                   <div className="flex-grow min-w-0">
-                    <h3 className="font-semibold text-sm sm:text-base truncate">{item.title}</h3>
+                    <h3 className="font-semibold text-sm sm:text-base text-gray-900 truncate">{item.title}</h3>
                     <p className="text-xs sm:text-sm text-gray-600">{item.author}</p>
-                    <p className="text-base sm:text-lg font-bold mt-1 sm:mt-2">₹{item.price}</p>
+                    <p className="text-base sm:text-lg font-bold text-gray-900 mt-1 sm:mt-2">₹{item.price.toFixed(2)}</p>
                   </div>
 
                   {/* Quantity Controls */}
-                  <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                     <button
                       onClick={() => updateQuantity(item.id, -1)}
-                      className="p-1 rounded-full hover:bg-gray-100"
+                      className="p-1.5 rounded-full text-gray-600 hover:bg-gray-100 transition-colors"
+                      aria-label="Decrease quantity"
                     >
-                      <FiMinus size={14} />
+                      <FiMinus size={16} />
                     </button>
-                    <span className="w-6 sm:w-8 text-center text-sm">{item.quantity}</span>
+                    <span className="w-6 sm:w-8 text-center text-sm font-medium">{item.quantity}</span>
                     <button
                       onClick={() => updateQuantity(item.id, 1)}
-                      className="p-1 rounded-full hover:bg-gray-100"
+                      className="p-1.5 rounded-full text-gray-600 hover:bg-gray-100 transition-colors"
+                      aria-label="Increase quantity"
                     >
-                      <FiPlus size={14} />
+                      <FiPlus size={16} />
                     </button>
                   </div>
 
                   {/* Remove Button */}
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="p-1.5 sm:p-2 text-gray-400 hover:text-red-500"
+                    className="p-1.5 sm:p-2 text-gray-500 hover:text-red-600 transition-colors flex-shrink-0"
+                    aria-label="Remove item"
                   >
-                    <FiTrash2 size={16} />
+                    <FiTrash2 size={18} />
                   </button>
                 </div>
               ))
@@ -113,33 +117,37 @@ const Cart = () => {
 
           {/* Order Summary (Right Side) */}
           <div className="lg:col-span-4">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+            <div className="bg-white rounded-lg p-6  border border-neutral-300 max-lg:border-0 sticky top-35">
+              <h2 className="text-lg font-semibold mb-4 border-b pb-3 text-gray-800">Order Summary</h2>
               
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span>₹{subtotal}</span>
+                  <span className="font-medium text-gray-900">₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
-                  <span>₹{shipping}</span>
+                  <span className="font-medium text-gray-900">₹{shipping.toFixed(2)}</span>
                 </div>
-                <div className="border-t pt-3">
-                  <div className="flex justify-between font-semibold">
-                    <span>Total</span>
-                    <span>₹{total}</span>
+                <div className="border-t pt-4 mt-2">
+                  <div className="flex justify-between font-semibold text-base">
+                    <span className="text-gray-900">Total</span>
+                    <span className="text-gray-900">₹{total.toFixed(2)}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Including GST</p>
+                  <p className="text-xs text-gray-500 mt-1">Including all taxes</p>
                 </div>
               </div>
 
-              <button className="w-full mt-6 bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors">
+              {/* --- FIX: Changed <a> to <Link> and added styling --- */}
+              <Link
+                to="/checkout"
+                className="block w-full text-center mt-6 bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+              >
                 Proceed to Checkout
-              </button>
+              </Link>
 
-              <div className="mt-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="mt-5">
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
                   <span>Estimated delivery:</span>
                   <span className="font-medium">3-5 business days</span>
                 </div>
