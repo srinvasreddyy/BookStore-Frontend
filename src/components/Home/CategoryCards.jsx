@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "@tanstack/react-router";
 
 const CATEGORIES = [
   {
@@ -54,8 +55,10 @@ const CategoryCards = () => {
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
         {CATEGORIES.map((category) => {
           return (
-            <div
+            <Link
               key={category.slug}
+              to="/products/$category"
+              params={{ category: category.slug }}
               className="relative h-60 max-lg:h-50 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
             >
               <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
@@ -67,7 +70,7 @@ const CategoryCards = () => {
                   Order Now
                 </button>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

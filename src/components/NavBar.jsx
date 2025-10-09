@@ -3,6 +3,7 @@ import { IoSearch } from "react-icons/io5";
 import { TbCircleLetterBFilled } from "react-icons/tb";
 import { LuShoppingBag } from "react-icons/lu";
 import { FiChevronDown, FiMenu, FiX } from "react-icons/fi";
+import { Link } from "@tanstack/react-router";
 
 const CATEGORIES = [
   "All",
@@ -72,7 +73,10 @@ const NavBar = () => {
             <div className="text-2xl text-black">
               <TbCircleLetterBFilled />
             </div>
-            <a href="#" className="font-extrabold tracking-tight text-neutral-900 uppercase">
+            <a
+              href="/"
+              className="font-extrabold tracking-tight text-neutral-900 uppercase"
+            >
               Bookstore
             </a>
           </div>
@@ -87,7 +91,7 @@ const NavBar = () => {
                   className="flex-1 px-4 py-0 text-xs bg-neutral-50 outline-none"
                 />
                 <button className="h-8 px-3 bg-neutral-900 text-white text-xs flex items-center gap-2">
-                  <IoSearch className="text-xs"/>
+                  <IoSearch className="text-xs" />
                   <span className="hidden sm:inline font-semibold">Search</span>
                 </button>
               </div>
@@ -96,15 +100,26 @@ const NavBar = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <button className="hidden md:inline text-xs uppercase font-semibold px-4 py-2 rounded-md">
-              Discover
-            </button>
-            <button className="hidden md:inline bg-neutral-900 text-white text-xs uppercase font-semibold px-10 py-2 rounded-md">
+            <Link
+              to="/register"
+              className="hidden md:inline text-xs uppercase font-semibold px-4 py-2 rounded-md"
+            >
+              Register
+            </Link>
+            <Link
+              to="/login"
+              className="hidden md:inline bg-neutral-900 text-white text-xs uppercase font-semibold px-10 py-2 rounded-md"
+            >
               Login
-            </button>
-            <button className="text-xl text-neutral-700">
+            </Link>
+            <Link
+              to="/cart"
+              className="text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
+              aria-label="Cart"
+            >
               <LuShoppingBag />
-            </button>
+            </Link>
+
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -154,7 +169,7 @@ const NavBar = () => {
               className="flex-1 px-4 py-0 text-xs bg-neutral-50 outline-none"
             />
             <button className="h-8 px-3 bg-neutral-900 text-white text-xs flex items-center gap-2">
-              <IoSearch className="text-xs"/>
+              <IoSearch className="text-xs" />
               <span className="hidden sm:inline font-semibold">Search</span>
             </button>
           </div>
@@ -179,9 +194,9 @@ const NavBar = () => {
                 <div className="absolute mt-2 w-56 bg-white text-neutral-900 rounded-md shadow-lg border border-neutral-200 z-40">
                   <div className="p-2 grid grid-cols-1 gap-1">
                     {CATEGORIES.map((cat) => (
-                      <a 
-                        key={cat} 
-                        href="#" 
+                      <a
+                        key={cat}
+                        href="#"
                         className="block px-3 py-2 text-sm rounded hover:bg-neutral-100"
                         onClick={() => setOpenStrip(false)}
                       >
@@ -192,9 +207,19 @@ const NavBar = () => {
                 </div>
               )}
             </div>
-            <div className="max-lg:hidden">{MENU_ITEMS.map((menu)=>{
-                 return <a key={menu.label} href={menu.href} className="ml-6 text-xs  font-semibold hover:underline">{menu.label}</a>  
-            })}</div>
+            <div className="max-lg:hidden">
+              {MENU_ITEMS.map((menu) => {
+                return (
+                  <a
+                    key={menu.label}
+                    href={menu.href}
+                    className="ml-6 text-xs  font-semibold hover:underline"
+                  >
+                    {menu.label}
+                  </a>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

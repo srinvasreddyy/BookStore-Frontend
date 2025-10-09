@@ -93,7 +93,7 @@ const BestPublications = () => {
       >
         <div className="flex gap-6 pb-4">
           {BOOKS.map(book => (
-            <article key={book.id} className="min-w-[220px] md:min-w-[260px] lg:min-w-[280px] bg-white rounded-lg shadow-sm overflow-hidden">
+            <a href='/product/1' key={book.id} className="min-w-[220px] md:min-w-[260px] lg:min-w-[280px] bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="w-full h-44 bg-gray-100">
                 <img src={book.image} alt={book.title} className="w-full h-full object-cover" loading="lazy" />
               </div>
@@ -111,7 +111,7 @@ const BestPublications = () => {
                   </button>
                 </div>
               </div>
-            </article>
+            </a>
           ))}
         </div>
       </div>

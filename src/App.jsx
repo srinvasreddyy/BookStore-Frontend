@@ -1,24 +1,22 @@
-import React from 'react'
-import NavBar from './components/NavBar'
-import HeroC from './components/HeroC'
-import CategoryCards from './components/CategoryCards'
-import BestPublications from './components/BestPublications'
-import YoutubeFrames from './components/YoutubeFrames'
-import Steps from './components/Steps'
-import Videos from './components/Videos'
-import Footer from './components/Footer'
+import BestPublications from "./components/Home/BestPublications"
+import CategoryCards from "./components/Home/CategoryCards"
+import HeroC from "./components/Home/HeroC"
+
+import Steps from "./components/Home/Steps"
+import Videos from "./components/Home/Videos"
+import YoutubeFrames from "./components/Home/YoutubeFrames"
 
 const App = () => {
   return (
     <>
-    <NavBar />
-    <HeroC/>
-    <CategoryCards/>
-    <BestPublications/>
-    <Steps/>
-    <YoutubeFrames/>
-    <Videos/>
-    <Footer/>
+
+    <HeroC />
+    <CategoryCards />
+    <BestPublications />
+    <Steps />
+    <YoutubeFrames />
+    <Videos />
+   
 </>
   )
 }
