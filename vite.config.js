@@ -19,6 +19,7 @@ export default defineConfig({
         target: 'https://bookstore-server-tg0m.onrender.com',
         changeOrigin: true,
         secure: true,
+        credentials: true,
       },
     },
   },
