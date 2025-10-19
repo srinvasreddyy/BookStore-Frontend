@@ -1,14 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from '@tanstack/react-router';
+import { getUserOrders } from '../lib/api';
 
 const Orders = () => {
   const { user } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock orders data - replace with actual API call
-  const orders = [
-    // Add mock orders here or fetch from API
-  ];
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    getUserOrders()
+      .then((res) => {
+        if (!mounted) return;
+        // API returns ApiResponse { statusCode, data: { orders, pagination }, message }
+        const data = res?.data?.orders || [];
+        setOrders(data);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setError(err.message || 'Failed to load orders');
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-white py-4 max-lg:py-2 px-0 sm:px-6 lg:px-8">
@@ -22,7 +45,11 @@ const Orders = () => {
           </div>
 
           <div className="p-6">
-            {orders.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12">Loading your orders...</div>
+            ) : error ? (
+              <div className="text-center py-12 text-red-500">{error}</div>
+            ) : orders.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-6xl mb-4">📦</div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
@@ -56,6 +83,46 @@ const Orders = () => {
                         <p className="text-sm text-gray-600 capitalize">
                           {order.status}
                         </p>
+                      </div>
+                    </div>
+                    {order.books && order.books.length > 0 && (
+                      <div className="mt-3 grid grid-cols-1 gap-2">
+                        {order.books.map((b, idx) => (
+                          <div key={idx} className="flex items-center gap-3 text-sm text-gray-700">
+                            {b.images && b.images[0] ? (
+                              <img src={b.images[0]} alt={b.title} className="w-14 h-20 object-cover rounded-md" />
+                            ) : (
+                              <div className="w-14 h-20 bg-gray-100 rounded-md flex items-center justify-center text-gray-300">No Image</div>
+                            )}
+                            <div>
+                              <div className="font-medium">{b.title}</div>
+                              <div className="text-xs text-gray-600">Qty: {b.quantity} — ${b.price}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Shipping & delivery details */}
+                    <div className="mt-3 text-sm text-gray-700 border-t pt-3">
+                      <div className="font-medium">Shipping address</div>
+                      {order.shippingAddress ? (
+                        <div className="text-xs text-gray-600 mt-1">
+                          <div>{order.shippingAddress.fullName}</div>
+                          <div>{order.shippingAddress.address}, {order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.zip}</div>
+                          <div>Phone: {order.shippingAddress.phone}</div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500">No shipping address</div>
+                      )}
+
+                      <div className="mt-2">
+                        <div className="font-medium">Delivery partner</div>
+                        {order.deliveryBoyName ? (
+                          <div className="text-xs text-gray-600 mt-1">{order.deliveryBoyName} — {order.deliveryBoyMobile}</div>
+                        ) : (
+                          <div className="text-xs text-gray-500">Not assigned yet</div>
+                        )}
                       </div>
                     </div>
                   </div>

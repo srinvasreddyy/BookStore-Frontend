@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { FiPlay, FiPause, FiVolume2, FiVolumeX, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import { RiBookOpenLine } from 'react-icons/ri'
+import { apiGet } from '../../lib/api'
 
 // Videos section: responsive grid of short, auto-playing videos.
 // Notes:
@@ -8,28 +9,43 @@ import { RiBookOpenLine } from 'react-icons/ri'
 // - Autoplaying unmuted videos is blocked by browsers, so videos start muted and loop.
 
 const Videos = () => {
-  // Sample videos: replace these with Pexels direct mp4 links.
-  // I included widely-available sample files as placeholders; swap them with Pexels assets.
-  const videos = [
-    {
-      id: 1,
-      src: 'https://www.w3schools.com/html/mov_bbb.mp4',
-      poster: ''
-    },
-    {
-      id: 2,
-      src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-      poster: ''
-    },
-    {
-      id: 3,
-      src: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/bee.mp4',
-      poster: ''
-    }
-  ]
-
+  const [videos, setVideos] = useState([])
   const containerRef = useRef(null)
   const [playingMap, setPlayingMap] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true)
+        const response = await apiGet('/homepage')
+        const homepageData = response.data
+
+        if (homepageData.shortVideos && homepageData.shortVideos.length > 0) {
+          const shortVideos = homepageData.shortVideos.map((video, index) => ({
+            id: video._id || index + 1,
+            src: video.videoUrl,
+            poster: '',
+            title: video.title,
+            description: video.description,
+            duration: video.duration
+          }))
+          setVideos(shortVideos)
+        } else {
+          setVideos([])
+        }
+      } catch (err) {
+        console.error('Failed to fetch short videos:', err)
+        setError(err.message)
+        setVideos([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchVideos()
+  }, [])
 
   useEffect(() => {
     const observerOptions = {
@@ -63,7 +79,7 @@ const Videos = () => {
     }
 
     return () => observer.disconnect()
-  }, [])
+  }, [videos])
 
   const togglePlay = (ev, id) => {
     const video = ev.currentTarget.closest('.video-card').querySelector('video')
@@ -85,11 +101,15 @@ const Videos = () => {
     setPlayingMap((m) => ({ ...m, [`muted_${id}`]: video.muted }))
   }
 
+  // Don't render anything if no videos and not loading
+  if (!loading && videos.length === 0) return null
+
   return (
     <section className="py-10 px-4 md:px-8 bg-white">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl font-bold max-lg:text-2xl max-lg:mb-1 mb-4 text-gray-800">Short Videos</h2>
         <p className="text-gray-600 mb-6  max-lg:text-xs">Quick previews and short clips from our bookstore.</p>
+        {error && <p className="text-red-500 text-sm mb-4">Failed to load videos: {error}</p>}
 
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm text-gray-600">Browse shorts</div>
@@ -132,7 +152,7 @@ const Videos = () => {
                     {/* theme badge (replaces per-video title) */}
                     <div className="absolute z-30 top-3 left-3 bg-black bg-opacity-60 text-white rounded-full px-3 py-1 flex items-center gap-2">
                       <RiBookOpenLine className="w-4 h-4" />
-                      <span className="text-xs font-semibold">BookStore</span>
+                      <span className="text-xs font-semibold">{v.title || 'BookStore'}</span>
                     </div>
                   <video
                     data-id={v.id}
@@ -144,7 +164,7 @@ const Videos = () => {
                     loop
                     playsInline
                     preload="metadata"
-                    aria-label={`Short video ${v.id}`}
+                    aria-label={`Short video ${v.title || v.id}`}
                   />
 
                   {/* minimal overlay controls (bottom-right) */}

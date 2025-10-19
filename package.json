@@ -13,6 +13,7 @@
     "@tailwindcss/vite": "^4.1.14",
     "@tanstack/react-router": "^1.132.47",
     "@tanstack/react-router-devtools": "^1.132.51",
+    "razorpay": "^2.9.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.6.0",

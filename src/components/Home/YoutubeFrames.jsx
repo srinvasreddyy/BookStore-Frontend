@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { apiGet } from '../../lib/api'
 
 const VIDEOS = [
   {
@@ -19,15 +20,55 @@ const VIDEOS = [
 ]
 
 const YoutubeFrames = () => {
+  const [videos, setVideos] = useState(VIDEOS)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setLoading(true)
+        const response = await apiGet('/homepage')
+        const homepageData = response.data
+
+        if (homepageData.youtubeVideos && homepageData.youtubeVideos.length > 0) {
+          const youtubeVideos = homepageData.youtubeVideos.map(video => {
+            // Extract video ID from YouTube URL
+            const videoId = video.videoUrl.split('v=')[1]?.split('&')[0] ||
+                           video.videoUrl.split('/').pop()?.split('?')[0] ||
+                           video.videoUrl
+
+            return {
+              id: videoId,
+              title: video.title,
+              channel: 'BookStore Channel',
+              description: video.description
+            }
+          })
+          setVideos(youtubeVideos)
+        }
+      } catch (err) {
+        console.error('Failed to fetch YouTube videos:', err)
+        setError(err.message)
+        // Keep default videos if API fails
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchVideos()
+  }, [])
+
   return (
     <section className="py-10 px-4 max-w-7xl mx-auto">
       <div className="mb-6">
         <p className="text-xs font-semibold text-neutral-500 uppercase">Brand video</p>
         <h2 className="text-2xl font-bold">From our YouTube</h2>
+        {error && <p className="text-red-500 text-sm mt-2">Failed to load videos: {error}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {VIDEOS.map((v) => (
+        {videos.map((v) => (
           <div key={v.id} className="bg-white rounded-lg overflow-hidden shadow-sm">
             {/* responsive iframe wrapper */}
             <div className="relative" style={{ paddingTop: '56.25%' }}>
@@ -54,6 +95,9 @@ const YoutubeFrames = () => {
                   Watch on YouTube
                 </a>
               </div>
+              {v.description && (
+                <p className="text-xs text-neutral-600 mt-2 line-clamp-2">{v.description}</p>
+              )}
             </div>
           </div>
         ))}

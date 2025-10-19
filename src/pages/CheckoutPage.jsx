@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 // --- Step 1: Import React Icons ---
 import { FaCreditCard, FaMoneyBillWave } from 'react-icons/fa';
 import { FcSimCardChip } from "react-icons/fc";
-import { getCart, initiateOrder } from '../lib/api';
+import { getCart, initiateOrder, getRazorpayKey } from '../lib/api';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from '@tanstack/react-router';
 
@@ -20,11 +20,14 @@ const CheckoutPage = () => {
     zip: '',
     phone: ''
   });
+  const [razorpayKey, setRazorpayKey] = useState('');
+  const [razorpayAvailable, setRazorpayAvailable] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch cart data on component mount
+  // Fetch cart data and Razorpay key on component mount
   useEffect(() => {
     fetchCartData();
+    fetchRazorpayKey();
   }, []);
 
   const fetchCartData = async () => {
@@ -48,6 +51,22 @@ const CheckoutPage = () => {
       toast.error('Failed to load cart data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRazorpayKey = async () => {
+    try {
+      const response = await getRazorpayKey();
+      setRazorpayKey(response.key);
+      setRazorpayAvailable(true);
+    } catch (error) {
+      console.error('Failed to fetch Razorpay key:', error);
+      setRazorpayAvailable(false);
+      // If UPI was selected but now unavailable, switch to COD
+      if (paymentMethod === 'upi') {
+        setPaymentMethod('cod');
+      }
+      // Don't show error toast for key fetch failure, just log it
     }
   };
 
@@ -81,19 +100,80 @@ const CheckoutPage = () => {
       if (paymentMethod === 'cod') {
         // Create order with Cash on Delivery
         const orderData = {
-          paymentMethod: 'CASH_ON_DELIVERY'
+          paymentMethod: 'CASH_ON_DELIVERY',
+          shippingAddress,
         };
 
         const response = await initiateOrder(orderData);
         toast.success('Order placed successfully!');
         navigate('/orders');
       } else {
-        // UPI/Card payment - show under construction
-        toast.error('Online payment methods are currently under construction');
+        // UPI/Card payment - initiate Razorpay payment
+        if (!razorpayAvailable) {
+          toast.error('Payment system is not available right now');
+          return;
+        }
+
+        const orderData = {
+          paymentMethod: 'RAZORPAY',
+          shippingAddress,
+        };
+
+        const response = await initiateOrder(orderData);
+        const { order, razorpayOrder } = response.data;
+
+        console.log('Razorpay order created:', razorpayOrder);
+        console.log('Razorpay key:', razorpayKey);
+
+        // Check if Razorpay is loaded
+        if (typeof window.Razorpay === 'undefined') {
+          toast.error('Razorpay payment system is not loaded. Please refresh the page.');
+          return;
+        }
+
+        // Initialize Razorpay payment
+        const options = {
+          key: razorpayKey,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          name: 'BookStore',
+          description: 'Book Purchase',
+          order_id: razorpayOrder.id,
+          handler: function (response) {
+            console.log('Payment successful:', response);
+            // Payment successful
+            toast.success('Payment successful! Order placed.');
+            navigate('/orders');
+          },
+          prefill: {
+            name: shippingAddress.fullName,
+            email: '', // You might want to get this from user data
+            contact: shippingAddress.phone
+          },
+          theme: {
+            color: '#000000'
+          },
+          modal: {
+            ondismiss: function() {
+              console.log('Payment cancelled');
+              toast.error('Payment cancelled');
+            }
+          }
+        };
+
+        console.log('Razorpay options:', options);
+
+        try {
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } catch (error) {
+          console.error('Error opening Razorpay:', error);
+          toast.error('Failed to open payment gateway. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Failed to place order:', error);
-      toast.error('Failed to place order. Please try again.');
+      toast.error(error.message || 'Failed to place order. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -206,19 +286,19 @@ const CheckoutPage = () => {
               <div className="space-y-4">
 
                 {/* UPI/Card Option */}
-                <div onClick={() => setPaymentMethod('upi')} className={`p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'upi' ? 'border-black ring-2 ring-black' : ' py-2 border-neutral-300 border px-4 hover:border-gray-400'}`}>
+                <div onClick={() => razorpayAvailable && setPaymentMethod('upi')} className={`p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'upi' ? 'border-black ring-2 ring-black' : ' py-2 border-neutral-300 border px-4 hover:border-gray-400'} ${!razorpayAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}>
                   <div className="flex items-center">
                     <input 
                       type="radio" 
                       name="paymentMethod" 
                       value="upi"
                       checked={paymentMethod === 'upi'}
-                      onChange={() => setPaymentMethod('upi')}
+                      onChange={() => razorpayAvailable && setPaymentMethod('upi')}
+                      disabled={!razorpayAvailable}
                       className="h-5 w-5 text-black focus:ring-black  py-2 border-neutral-300 border px-4"
                     />
                     <FcSimCardChip className="h-6 w-6 ml-4 mr-3 " />
-                    <span className="font-medium text-gray-800">UPI/Card</span>
-                    <span className="ml-2 text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">Under Construction</span>
+                    <span className={`font-medium ${!razorpayAvailable ? 'text-gray-400' : 'text-gray-800'}`}>UPI/Card {!razorpayAvailable && '(Unavailable)'}</span>
                   </div>
                 </div>
 
@@ -293,7 +373,7 @@ const CheckoutPage = () => {
                     disabled={submitting || cartItems.length === 0}
                     className="w-full bg-black text-white font-bold py-3 px-4 rounded-lg mt-8 hover:bg-gray-800 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {submitting ? 'Processing...' : paymentMethod === 'cod' ? 'Place Order' : 'Confirm and Pay'}
+                    {submitting ? 'Processing...' : paymentMethod === 'cod' ? 'Place Order' : 'Pay Now'}
                   </button>
                 </>
               )}

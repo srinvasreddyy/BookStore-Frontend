@@ -114,6 +114,17 @@ export async function initiateOrder(orderData) {
   return apiPost('/orders/initiate', orderData);
 }
 
+// Fetch orders for current authenticated user
+export async function getUserOrders(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return apiGet(`/orders${query ? `?${query}` : ''}`);
+}
+
+// Payment API functions
+export async function getRazorpayKey() {
+  return apiGet('/payments/key');
+}
+
 // User API functions
 export async function getCurrentUser() {
   return apiGet('/users/current-user');
