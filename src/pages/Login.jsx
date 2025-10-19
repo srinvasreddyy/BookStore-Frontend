@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { FiMail, FiLock } from 'react-icons/fi';
+import { apiPost } from '../lib/api';
+import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -15,10 +20,24 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login data:', formData);
+    try {
+      const response = await apiPost('/users/login', {
+        email: formData.email,
+        password: formData.password,
+      });
+      console.log('Login successful:', response);
+
+      // Store user data in context
+      login(response.data.user);
+
+      toast.success('Login successful!');
+      navigate({ to: '/' });
+    } catch (error) {
+      console.error('Login failed:', error);
+      toast.error(error.message || 'Login failed. Please try again.');
+    }
   };
 
   return (

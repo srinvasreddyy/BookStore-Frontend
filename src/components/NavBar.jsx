@@ -3,22 +3,13 @@ import React, { useState, useRef, useEffect } from "react";
 import { IoSearch } from "react-icons/io5";
 import { TbCircleLetterBFilled } from "react-icons/tb";
 import { LuShoppingBag } from "react-icons/lu";
-import { FiChevronDown, FiMenu, FiX } from "react-icons/fi";
-import { Link } from "@tanstack/react-router";
+import { FiChevronDown, FiMenu, FiX, FiUser, FiLogOut, FiPackage, FiInfo } from "react-icons/fi";
+import { Link, useNavigate } from "@tanstack/react-router";
 import SearchOverlay from "./SearchOverlay"; // Import the new component
-
-const CATEGORIES = [
-  "All",
-  "Fiction",
-  "Non-fiction",
-  "Sci-fi",
-  "Fantasy",
-  "Children",
-  "Biographies",
-  "Self-help",
-  "Business",
-  "Comics",
-];
+import { useAuth } from "../contexts/AuthContext";
+import toast from "react-hot-toast";
+import { apiPost } from "../lib/api";
+import { getAllCategories } from "../lib/api";
 
 const MENU_ITEMS = [
   { label: "Discover", href: "/discover" },
@@ -33,10 +24,16 @@ const MENU_ITEMS = [
 const NavBar = () => {
   const [openStrip, setOpenStrip] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); // State for search overlay
+  const [categories, setCategories] = useState([]);
+
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const stripRef = useRef(null);
   const menuRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   // A cleaner useEffect hook for closing modals
   useEffect(() => {
@@ -47,12 +44,16 @@ const NavBar = () => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMobileMenuOpen(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
     };
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
         setOpenStrip(false);
         setMobileMenuOpen(false);
+        setUserMenuOpen(false);
         setIsSearchOpen(false);
       }
     };
@@ -72,6 +73,37 @@ const NavBar = () => {
       document.body.style.overflow = "auto";
     };
   }, [isSearchOpen]);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getAllCategories();
+        setCategories(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        // Fallback to empty array or default categories if needed
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await apiPost('/users/logout');
+      logout();
+      setUserMenuOpen(false);
+      toast.success('Logged out successfully');
+      navigate({ to: '/' });
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Even if API call fails, clear local state
+      logout();
+      setUserMenuOpen(false);
+      toast.success('Logged out successfully');
+      navigate({ to: '/' });
+    }
+  };
 
   const SearchTriggerButton = ({ className }) => (
     <button
@@ -116,25 +148,80 @@ const NavBar = () => {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-              <Link
-                to="/register"
-                className="hidden md:inline text-xs uppercase font-semibold px-4 py-2 rounded-md"
-              >
-                Register
-              </Link>
-              <Link
-                to="/login"
-                className="hidden md:inline bg-neutral-900 text-white text-xs uppercase font-semibold px-10 py-2 rounded-md"
-              >
-                Login
-              </Link>
-              <Link
-                to="/cart"
-                className="text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
-                aria-label="Cart"
-              >
-                <LuShoppingBag />
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/cart"
+                    className="text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
+                    aria-label="Cart"
+                  >
+                    <LuShoppingBag />
+                  </Link>
+                  {/* User Menu */}
+                  <div className="relative" ref={userMenuRef}>
+                    <button
+                      onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      className="flex items-center gap-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 transition-colors"
+                      aria-expanded={userMenuOpen}
+                      aria-label="User menu"
+                    >
+                      <FiUser className="text-lg" />
+                      <span className="hidden sm:inline">{user?.fullName || 'User'}</span>
+                      <FiChevronDown className="text-sm" />
+                    </button>
+
+                    {userMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-neutral-200 z-50 py-2">
+                        <Link
+                          to="/orders"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <FiPackage className="text-lg" />
+                          My Orders
+                        </Link>
+                        <Link
+                          to="/about"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <FiInfo className="text-lg" />
+                          About
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                        >
+                          <FiLogOut className="text-lg" />
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/register"
+                    className="hidden md:inline text-xs uppercase font-semibold px-4 py-2 rounded-md"
+                  >
+                    Register
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="hidden md:inline bg-neutral-900 text-white text-xs uppercase font-semibold px-10 py-2 rounded-md"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/cart"
+                    className="text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
+                    aria-label="Cart"
+                  >
+                    <LuShoppingBag />
+                  </Link>
+                </>
+              )}
 
               {/* Mobile Menu */}
               <div className="relative md:hidden" ref={menuRef}>
@@ -149,27 +236,60 @@ const NavBar = () => {
 
                 {mobileMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-neutral-200 z-50 py-2">
-                    <Link
-                      to="/login"
-                      className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Login
-                    </Link>
-                    <Link
-                      to="/register"
-                      className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Register
-                    </Link>
-                    <a
-                      href="#about"
-                      className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      About
-                    </a>
+                    {isAuthenticated ? (
+                      <>
+                        <div className="px-4 py-2 text-sm font-medium text-neutral-900 border-b border-neutral-200">
+                          {user?.fullName || 'User'}
+                        </div>
+                        <Link
+                          to="/orders"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <FiPackage className="text-lg" />
+                          My Orders
+                        </Link>
+                        <Link
+                          to="/about"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <FiInfo className="text-lg" />
+                          About
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                        >
+                          <FiLogOut className="text-lg" />
+                          Logout
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          to="/login"
+                          className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          Login
+                        </Link>
+                        <Link
+                          to="/register"
+                          className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          Register
+                        </Link>
+                        <a
+                          href="#about"
+                          className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          About
+                        </a>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -200,13 +320,13 @@ const NavBar = () => {
                 {openStrip && (
                   <div className="absolute mt-2 w-56 bg-white text-neutral-900 rounded-md shadow-lg border border-neutral-200 z-40">
                     <div className="p-2 grid grid-cols-1 gap-1">
-                      {CATEGORIES.map((cat) => (
+                      {[{ name: "All" }, ...categories].map((cat) => (
                         <a
-                          key={cat}
-                          href={`/products/${cat.toLowerCase()}`}                          className="block px-3 py-2 text-sm rounded hover:bg-neutral-100"
+                          key={cat.name}
+                          href={`/products/${cat.name.toLowerCase()}`}                          className="block px-3 py-2 text-sm rounded hover:bg-neutral-100"
                           onClick={() => setOpenStrip(false)}
                         >
-                          {cat}
+                          {cat.name}
                         </a>
                       ))}
                     </div>

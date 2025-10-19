@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { FiUser, FiMail, FiLock } from 'react-icons/fi';
+import { apiPost } from '../lib/api';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -17,10 +19,27 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle registration logic here
-    console.log('Registration data:', formData);
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
+    try {
+      const response = await apiPost('/users/register', {
+        fullName: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+      console.log('Registration successful:', response);
+      // TODO: Handle successful registration (redirect to login, etc.)
+      toast.success('Registration successful! Please log in.');
+    } catch (error) {
+      console.error('Registration failed:', error);
+      toast.error(error.message || 'Registration failed. Please try again.');
+    }
   };
 
   return (

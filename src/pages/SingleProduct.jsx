@@ -1,31 +1,92 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams, Link } from "@tanstack/react-router";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { BsBookHalf } from "react-icons/bs";
+import { getBookById, addItemToCart } from "../lib/api";
+import toast from "react-hot-toast";
 
 const SingleProduct = () => {
+  const { id } = useParams({ from: '/product/$id' });
   const [currentImage, setCurrentImage] = useState(0);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [addingToCart, setAddingToCart] = useState(false);
 
-  const product = {
-    id: 1,
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    price: 299,
-    description:
-      "The Great Gatsby is a 1925 novel by American writer F. Scott Fitzgerald. Set in the Jazz Age on Long Island, near New York City, the novel depicts first-person narrator Nick Carraway's interactions with mysterious millionaire Jay Gatsby and Gatsby's obsession to reunite with his former lover, Daisy Buchanan.",
-    publisher: "Scribner",
-    publishedYear: 1925,
-    isbn: "978-0743273565",
-    pages: 180,
-    language: "English",
-    format: "Hardcover",
-    images: [
-      "https://plus.unsplash.com/premium_photo-1664006988924-16f386bcd40e?q=80&w=1073&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800&q=80",
-      "https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=800&q=80",
-    ],
-    genre: "Classic Literature",
-    edition: "First Edition",
+  const addToCart = async () => {
+    if (!product) return;
+
+    try {
+      setAddingToCart(true);
+      await addItemToCart(product.id, 1);
+      toast.success('Added to cart!');
+    } catch (err) {
+      console.error('Failed to add to cart:', err);
+      toast.error('Failed to add to cart');
+    } finally {
+      setAddingToCart(false);
+    }
   };
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const response = await getBookById(id);
+        const book = response.data;
+
+        // Transform book data to match component structure
+        const transformedProduct = {
+          id: book._id,
+          title: book.title,
+          author: book.author,
+          price: book.price,
+          description: book.fullDescription || book.shortDescription,
+          publisher: book.publisher,
+          publishedYear: book.createdAt ? new Date(book.createdAt).getFullYear() : 'N/A',
+          isbn: book.isbn,
+          pages: book.numberOfPages,
+          language: book.language,
+          format: book.format,
+          images: book.coverImages || [],
+          genre: book.category?.name || 'N/A', // Assuming category is populated
+          edition: 'N/A', // Not available in model
+        };
+
+        setProduct(transformedProduct);
+      } catch (err) {
+        console.error('Failed to fetch product:', err);
+        setError('Failed to load product');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProduct();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background-light text-[#0D141B] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-background-light text-[#0D141B] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Product not found'}</p>
+          <a href="/" className="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800">
+            Back to Home
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   const nextImage = () => {
     setCurrentImage((prev) => 
@@ -146,19 +207,19 @@ const SingleProduct = () => {
 
               {/* Buttons */}
               <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full h-12 flex items-center justify-center rounded-lg bg-neutral-100 text-black font-bold hover:bg-primary/20 transition-colors"
+                <button
+                  onClick={addToCart}
+                  disabled={addingToCart || loading}
+                  className="w-full h-12 flex items-center justify-center rounded-lg bg-neutral-100 text-black font-bold hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Add to Cart
-                </a>
-                <a
-                href="/cart"
+                  {addingToCart ? 'Adding...' : 'Add to Cart'}
+                </button>
+                <Link
+                  to="/cart"
                   className="w-full h-12 flex items-center justify-center rounded-lg bg-black text-white font-bold hover:opacity-90 transition-opacity"
                 >
                   Buy Now
-                </a>
+                </Link>
               </div>
             </div>
           </div>

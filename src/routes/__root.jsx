@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
+import { Toaster } from "react-hot-toast";
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -29,6 +30,30 @@ function RootComponent() {
       {!hideLayout && <NavBar />}
       <Outlet />
       {!hideLayout && <Footer />}
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#10B981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#EF4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </>
   );
 }

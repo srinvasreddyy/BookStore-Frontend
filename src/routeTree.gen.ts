@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CheckoutRouteImport } from './routes/checkout'
@@ -22,6 +23,11 @@ import { Route as ProductIdRouteImport } from './routes/product/$id'
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MediaRoute = MediaRouteImport.update({
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
   '/media': typeof MediaRoute
+  '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/product/$id': typeof ProductIdRoute
   '/products/$category': typeof ProductsCategoryRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
   '/media': typeof MediaRoute
+  '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/product/$id': typeof ProductIdRoute
   '/products/$category': typeof ProductsCategoryRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
   '/media': typeof MediaRoute
+  '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/product/$id': typeof ProductIdRoute
   '/products/$category': typeof ProductsCategoryRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/login'
     | '/media'
+    | '/orders'
     | '/register'
     | '/product/$id'
     | '/products/$category'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/login'
     | '/media'
+    | '/orders'
     | '/register'
     | '/product/$id'
     | '/products/$category'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/login'
     | '/media'
+    | '/orders'
     | '/register'
     | '/product/$id'
     | '/products/$category'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   LoginRoute: typeof LoginRoute
   MediaRoute: typeof MediaRoute
+  OrdersRoute: typeof OrdersRoute
   RegisterRoute: typeof RegisterRoute
   ProductIdRoute: typeof ProductIdRoute
   ProductsCategoryRoute: typeof ProductsCategoryRoute
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/media': {
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   LoginRoute: LoginRoute,
   MediaRoute: MediaRoute,
+  OrdersRoute: OrdersRoute,
   RegisterRoute: RegisterRoute,
   ProductIdRoute: ProductIdRoute,
   ProductsCategoryRoute: ProductsCategoryRoute,

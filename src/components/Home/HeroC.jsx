@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { apiGet } from '../../lib/api'
 
 // Simple carousel where each slide is an image wrapped in a link.
 // Tailwind utilities are used for styling (project should have Tailwind configured).
@@ -23,6 +24,8 @@ const DEFAULT_SLIDES = [
 const HeroC = ({ slides = DEFAULT_SLIDES, autoPlay = true, autoPlayInterval = 4000 }) => {
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [health, setHealth] = useState(null)
+  const [error, setError] = useState(null)
   const length = slides.length
   const timerRef = useRef(null)
   const trackRef = useRef(null)
@@ -34,6 +37,12 @@ const HeroC = ({ slides = DEFAULT_SLIDES, autoPlay = true, autoPlayInterval = 40
     }, autoPlayInterval)
     return () => clearInterval(timerRef.current)
   }, [autoPlay, paused, autoPlayInterval, length])
+
+  useEffect(() => {
+    apiGet('/healthcheck')
+      .then((data) => setHealth(data))
+       .catch((err) => setError(err.message))
+  }, [])
 
   useEffect(() => {
     // keep index in bounds if slides change
@@ -121,6 +130,11 @@ const HeroC = ({ slides = DEFAULT_SLIDES, autoPlay = true, autoPlayInterval = 40
               className={`w-2 h-2 rounded-full ${index === i ? 'bg-white' : 'bg-white/40'}`}
             />
           ))}
+        </div>
+
+        {/* API status badge (dev aid) */}
+        <div className="absolute left-3 bottom-3 text-xs bg-white/90 text-neutral-800 px-2 py-1 rounded shadow">
+          {error ? `API error: ${error}` : health ? (health.message || 'API OK') : 'Connecting to API...'}
         </div>
       </div>
     </section>
