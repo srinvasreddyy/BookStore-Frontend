@@ -1,4 +1,5 @@
-export const API_BASE = '/api/v1';
+// Use full server URL for production, relative path for development
+export const API_BASE = import.meta.env.DEV ? '/api/v1' : 'https://bookstore-server-tg0m.onrender.com/api/v1';
 
 export async function apiGet(path) {
   const response = await fetch(`${API_BASE}${path}`, {
