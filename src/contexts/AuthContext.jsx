@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getCurrentUser } from '../lib/api';
 
 const AuthContext = createContext();
 
@@ -18,14 +19,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // You can implement a check for current user endpoint here
-        // For now, we'll just check localStorage
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        }
+        const response = await getCurrentUser();
+        setUser(response.data);
       } catch (error) {
         console.error('Auth check failed:', error);
+        // If auth fails, clear any stored data
+        localStorage.removeItem('user');
       } finally {
         setLoading(false);
       }

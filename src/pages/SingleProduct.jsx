@@ -22,7 +22,13 @@ const SingleProduct = () => {
       toast.success('Added to cart!');
     } catch (err) {
       console.error('Failed to add to cart:', err);
-      toast.error('Failed to add to cart');
+      if (err.message.includes('401') || err.message.toLowerCase().includes('unauthorized')) {
+        toast.error('Please log in to add items to cart');
+        // Optionally redirect to login
+        // navigate({ to: '/login' });
+      } else {
+        toast.error('Failed to add to cart');
+      }
     } finally {
       setAddingToCart(false);
     }

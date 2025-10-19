@@ -114,4 +114,9 @@ export async function initiateOrder(orderData) {
   return apiPost('/orders/initiate', orderData);
 }
 
+// User API functions
+export async function getCurrentUser() {
+  return apiGet('/users/current-user');
+}
+
 

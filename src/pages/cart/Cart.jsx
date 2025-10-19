@@ -1,18 +1,30 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import React, { useState, useEffect } from 'react';
 import { FiMinus, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { getCart, addItemToCart, removeItemFromCart } from '../../lib/api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate({ to: '/login' });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   // Fetch cart data on component mount
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if (isAuthenticated) {
+      fetchCart();
+    }
+  }, [isAuthenticated]);
 
   const fetchCart = async () => {
     try {
@@ -37,8 +49,13 @@ const Cart = () => {
       setCartItems(transformedItems);
     } catch (err) {
       console.error('Failed to fetch cart:', err);
-      setError('Failed to load cart');
-      toast.error('Failed to load cart');
+      if (err.message.includes('401') || err.message.toLowerCase().includes('unauthorized')) {
+        setError('Please log in to view your cart');
+        toast.error('Please log in to view your cart');
+      } else {
+        setError('Failed to load cart');
+        toast.error('Failed to load cart');
+      }
     } finally {
       setLoading(false);
     }
@@ -91,6 +108,18 @@ const Cart = () => {
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = cartItems.length > 0 ? 49 : 0;
   const total = subtotal + shipping;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect
+  }
 
   return (
     <div className="min-h-screen bg-white">
