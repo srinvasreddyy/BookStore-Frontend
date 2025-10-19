@@ -16,9 +16,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://bookstore-server-psi.vercel.app',
+        target: 'https://bookstore-server-tg0m.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
     },
   },
