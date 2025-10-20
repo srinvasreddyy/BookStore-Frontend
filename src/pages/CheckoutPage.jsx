@@ -4,7 +4,7 @@ import { FaCreditCard, FaMoneyBillWave } from 'react-icons/fa';
 import { FcSimCardChip } from "react-icons/fc";
 import { getCart, initiateOrder, getRazorpayKey } from '../lib/api';
 import toast from 'react-hot-toast';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate, useLocation } from '@tanstack/react-router';
 
 
 const CheckoutPage = () => {
@@ -23,11 +23,22 @@ const CheckoutPage = () => {
   const [razorpayKey, setRazorpayKey] = useState('');
   const [razorpayAvailable, setRazorpayAvailable] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Discount information from cart
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   // Fetch cart data and Razorpay key on component mount
   useEffect(() => {
     fetchCartData();
     fetchRazorpayKey();
+    
+    // Extract discount information from navigation state
+    if (location.state) {
+      setAppliedDiscount(location.state.appliedDiscount || null);
+      setDiscountAmount(location.state.discountAmount || 0);
+    }
   }, []);
 
   const fetchCartData = async () => {
@@ -102,6 +113,8 @@ const CheckoutPage = () => {
         const orderData = {
           paymentMethod: 'CASH_ON_DELIVERY',
           shippingAddress,
+          appliedDiscount,
+          discountAmount,
         };
 
         const response = await initiateOrder(orderData);
@@ -117,6 +130,8 @@ const CheckoutPage = () => {
         const orderData = {
           paymentMethod: 'RAZORPAY',
           shippingAddress,
+          appliedDiscount,
+          discountAmount,
         };
 
         const response = await initiateOrder(orderData);
@@ -181,7 +196,7 @@ const CheckoutPage = () => {
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const shipping = cartItems.length > 0 ? 49 : 0;
-  const totalBill = subtotal + shipping;
+  const totalBill = subtotal + shipping - discountAmount;
 
   if (loading) {
     return (
@@ -359,6 +374,12 @@ const CheckoutPage = () => {
                       <span>Shipping</span>
                       <span>₹{shipping.toFixed(2)}</span>
                     </div>
+                    {appliedDiscount && discountAmount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount ({appliedDiscount.couponCode})</span>
+                        <span>-₹{discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
 
                   <hr className="border-gray-200 my-4" />

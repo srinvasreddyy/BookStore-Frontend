@@ -130,4 +130,9 @@ export async function getCurrentUser() {
   return apiGet('/users/current-user');
 }
 
+// Discount API functions
+export async function validateCoupon(couponCode, cartSubtotal) {
+  return apiPost('/discounts/validate', { couponCode, cartSubtotal });
+}
+
 
