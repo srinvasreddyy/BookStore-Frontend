@@ -118,8 +118,12 @@ const CheckoutPage = () => {
         };
 
         const response = await initiateOrder(orderData);
-        toast.success('Order placed successfully!');
-        navigate('/orders');
+        if (response && response.success) {
+          toast.success('Order placed successfully!');
+          navigate('/');
+        } else {
+          throw new Error('Failed to place order');
+        }
       } else {
         // UPI/Card payment - initiate Razorpay payment
         if (!razorpayAvailable) {
@@ -156,9 +160,9 @@ const CheckoutPage = () => {
           order_id: razorpayOrder.id,
           handler: function (response) {
             console.log('Payment successful:', response);
-            // Payment successful
+            // Payment successful — redirect to home; server webhook will finalize the order
             toast.success('Payment successful! Order placed.');
-            navigate('/orders');
+            navigate('/');
           },
           prefill: {
             name: shippingAddress.fullName,
