@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { FiUser, FiMail, FiLock } from 'react-icons/fi';
 import { apiPost } from '../lib/api';
 import toast from 'react-hot-toast';
-
+import logo from '../assets/logo.png'; // Adjust path if needed
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -48,9 +48,7 @@ const Register = () => {
         {/* Logo Section */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center justify-center">
-            <h1 className="text-2xl uppercase font-bold text-black tracking-tight">
-              BookStore
-            </h1>
+            <img src={logo} alt="Logo" className="w-auto h-16 mr-2" />
           </Link>
 
           <h2 className="mt-6 text-3xl font-bold text-gray-900">Create an account</h2>

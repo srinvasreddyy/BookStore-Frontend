@@ -4,7 +4,7 @@ import { FiMail, FiLock } from 'react-icons/fi';
 import { apiPost } from '../lib/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-
+import logo from '../assets/logo.png'; // Adjust path if needed
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -45,9 +45,8 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Link to="/" className="inline-flex mb-5 items-center justify-center">
-                      <h1 className="text-2xl uppercase font-bold text-black tracking-tight">
-                        BookStore
-                      </h1>
+                      
+                      <img src={logo} alt="Logo" className="w-auto h-16 mr-2" />
                     </Link>
           <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
           <p className="mt-2 text-sm text-gray-600">
