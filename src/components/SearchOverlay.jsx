@@ -3,21 +3,24 @@ import React, { useState, useEffect, useRef } from "react";
 import { IoSearch } from "react-icons/io5";
 import { FiX } from "react-icons/fi";
 import { TbCircleLetterBFilled } from "react-icons/tb"; // Logo icon
+import { apiGet } from "../lib/api";
+import { Link } from '@tanstack/react-router';
 
-// Dummy data to simulate API results
+// Local fallback in case API fails
 const DUMMY_PRODUCTS = [
   { id: 1, name: "The Great Gatsby", category: "Fiction" },
   { id: 2, name: "Sapiens: A Brief History of Humankind", category: "Non-fiction" },
   { id: 3, name: "Dune", category: "Sci-fi" },
-  { id: 4, name: "The Hobbit", category: "Fantasy" },
-  { id: 5, name: "To Kill a Mockingbird", category: "Fiction" },
-  { id: 6, name: "Atomic Habits", category: "Self-help" },
 ];
 
 const SearchOverlay = ({ onClose }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const inputRef = useRef(null);
+  const debounceRef = useRef(null);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -28,16 +31,64 @@ const SearchOverlay = ({ onClose }) => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  // Fetch all products once on mount (we'll filter client-side)
   useEffect(() => {
-    if (query.trim() === "") {
-      setResults([]);
-      return;
+    let cancelled = false;
+    async function fetchAll() {
+      setLoading(true);
+      setError(null);
+      try {
+        // fetch a larger page of books (increase limit if needed)
+        const resp = await apiGet('/books?limit=200');
+        const docs = resp.data?.docs || [];
+        const mapped = docs.map(b => ({
+          id: b._id,
+          title: b.title,
+          author: b.author,
+          shortDescription: b.shortDescription,
+          fullDescription: b.fullDescription,
+          publisher: b.publisher,
+          category: b.category?.name || '',
+        }));
+        if (!cancelled) setAllProducts(mapped);
+      } catch (err) {
+        console.error('Failed to fetch products for search:', err);
+        setError('Failed to load products');
+        if (!cancelled) setAllProducts(DUMMY_PRODUCTS);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
-    const filteredResults = DUMMY_PRODUCTS.filter((product) =>
-      product.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setResults(filteredResults);
-  }, [query]);
+
+    fetchAll();
+    return () => { cancelled = true };
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const q = query.trim().toLowerCase();
+      if (q === "") {
+        setResults([]);
+        return;
+      }
+
+      // Search across title, author, descriptions and publisher
+      const filtered = allProducts.filter(p => {
+        return (
+          (p.title && p.title.toLowerCase().includes(q)) ||
+          (p.author && p.author.toLowerCase().includes(q)) ||
+          (p.shortDescription && p.shortDescription.toLowerCase().includes(q)) ||
+          (p.fullDescription && p.fullDescription.toLowerCase().includes(q)) ||
+          (p.publisher && p.publisher.toLowerCase().includes(q))
+        )
+      });
+
+      setResults(filtered);
+    }, 200);
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, allProducts]);
 
   return (
     <div
@@ -71,7 +122,9 @@ const SearchOverlay = ({ onClose }) => {
 
         {/* Results Section */}
         <div className="overflow-y-auto">
-          {query.trim() === "" ? (
+          {loading ? (
+            <div className="text-center text-neutral-500 py-8">Loading products...</div>
+          ) : query.trim() === "" ? (
             <div className="text-center text-neutral-500 pt-10">
               <p>Start typing to find your next great read.</p>
             </div>
@@ -79,8 +132,11 @@ const SearchOverlay = ({ onClose }) => {
             <ul>
               {results.map((product) => (
                 <li key={product.id} className="p-4 border-b border-neutral-200 hover:bg-neutral-50 rounded-md">
-                  <h3 className="font-semibold">{product.name}</h3>
-                  <p className="text-sm text-neutral-600">{product.category}</p>
+                  <Link to="/product/$id" params={{ id: String(product.id) }} onClick={onClose} className="block">
+                    <h3 className="font-semibold">{product.title}</h3>
+                    <p className="text-sm text-neutral-600">{product.author} {product.publisher ? `• ${product.publisher}` : ''}</p>
+                    <p className="text-sm text-neutral-500 line-clamp-2 mt-1">{product.shortDescription || ''}</p>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -89,6 +145,7 @@ const SearchOverlay = ({ onClose }) => {
               <p>No results found for "{query}".</p>
             </div>
           )}
+          {error && <div className="text-sm text-red-600 mt-3">{error}</div>}
         </div>
       </div>
 
