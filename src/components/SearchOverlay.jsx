@@ -41,7 +41,7 @@ const SearchOverlay = ({ onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-white max-lg:top-12 z-[100] p-4"
+      className="fixed inset-0 bg-white max-lg:top-22 z-[100] p-4"
       aria-modal="true"
       role="dialog"
     >

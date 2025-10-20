@@ -10,7 +10,7 @@ import { useAuth } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
 import { apiPost } from "../lib/api";
 import { getAllCategories } from "../lib/api";
-
+import logo from "../assets/logo.png";
 const MENU_ITEMS = [
   { label: "Discover", href: "/discover" },
   { label: "Other Products", href: "/other-products" },
@@ -125,17 +125,15 @@ const NavBar = () => {
     <>
       <header className="w-full bg-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 max-lg:h-14">
+          <div className="flex items-center justify-between h-fit max-lg:h-fit">
             {/* Logo */}
-            <div className="flex items-center gap-1">
-              <div className="text-2xl text-black">
-                <TbCircleLetterBFilled />
-              </div>
+            <div className="flex items-center gap-1 py-2">
+              
               <a
                 href="/"
                 className="font-extrabold tracking-tight text-neutral-900 uppercase"
               >
-                Bookstore
+                <img src={logo} alt="BookStore Logo" className="h-20 max-lg:h-20 w-auto" />
               </a>
             </div>
 

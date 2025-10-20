@@ -149,9 +149,9 @@ const HeroC = ({ slides: propSlides, autoPlay = true, autoPlayInterval = 4000 })
         )}
 
         {/* API status badge (dev aid) */}
-        <div className="absolute left-3 bottom-3 text-xs bg-white/90 text-neutral-800 px-2 py-1 rounded shadow">
+        {/* <div className="absolute left-3 bottom-3 text-xs bg-white/90 text-neutral-800 px-2 py-1 rounded shadow">
           {error ? `API error: ${error}` : loading ? 'Loading...' : 'API OK'}
-        </div>
+        </div> */}
       </div>
     </section>
   )

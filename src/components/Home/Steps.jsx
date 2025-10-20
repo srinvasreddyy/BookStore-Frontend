@@ -16,8 +16,8 @@ const Steps = () => {
             {/* Left heading block -> About Bookstore */}
             <div className="flex flex-col justify-center">
               <p className="text-xs  font-bold text-neutral-500 uppercase">About</p>
-              <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-neutral-900 mt-2">About Bookstore</h2>
-              <p className="text-sm max-lg:text-xs text-neutral-600 mt-4 max-w-md">Bookstore is your destination for curated books across subjects — from school textbooks to competitive exam guides and general reading. We combine great prices, fast delivery, and a handpicked selection from trusted publishers and authors.</p>
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-neutral-900 mt-2">About Indian Book House</h2>
+              <p className="text-sm max-lg:text-xs text-neutral-600 mt-4 max-w-md">Indian Book House is your destination for curated books across subjects — from school textbooks to competitive exam guides and general reading. We combine great prices, fast delivery, and a handpicked selection from trusted publishers and authors.</p>
               <a href="/about" className="inline-block mt-4 px-4 w-fit py-2 bg-black text-white text-sm max-lg:text-xs rounded-md hover:bg-neutral-800">Learn more</a>
             </div>
 
