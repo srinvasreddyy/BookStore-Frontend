@@ -90,7 +90,7 @@ const CategoryCards = () => {
         {categories.map((category) => (
           <Link
             key={category.slug}
-            to="/products/$category"
+            to={`/products/${category.name.toLowerCase()}`}
             params={{ category: category.slug }}
             // The 'group' class is key for the hover effects on child elements
             className="relative group h-60 max-lg:h-48 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out"
