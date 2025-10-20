@@ -10,6 +10,7 @@ import { useAuth } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
 import { apiPost } from "../lib/api";
 import { getAllCategories } from "../lib/api";
+import { getCart } from "../lib/api";
 import logo from "../assets/logo.png";
 const MENU_ITEMS = [
   { label: "Discover", href: "/discover" },
@@ -30,6 +31,7 @@ const NavBar = () => {
 
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [cartCount, setCartCount] = useState(0);
 
   const stripRef = useRef(null);
   const menuRef = useRef(null);
@@ -87,6 +89,29 @@ const NavBar = () => {
     };
     fetchCategories();
   }, []);
+
+  // Fetch cart count when auth changes or on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchCartCount() {
+      if (!isAuthenticated) {
+        setCartCount(0);
+        return;
+      }
+      try {
+        const resp = await getCart();
+        const items = resp.data?.items || [];
+        if (!cancelled) setCartCount(items.reduce((s, it) => s + (it.quantity || 0), 0));
+      } catch (e) {
+        console.error('Failed to fetch cart:', e);
+      }
+    }
+    fetchCartCount();
+
+    const onCartUpdated = () => { fetchCartCount(); };
+    window.addEventListener('cart-updated', onCartUpdated);
+    return () => { cancelled = true; window.removeEventListener('cart-updated', onCartUpdated); };
+  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     try {
@@ -150,10 +175,15 @@ const NavBar = () => {
                 <>
                   <Link
                     to="/cart"
-                    className="text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
+                    className="relative text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
                     aria-label="Cart"
                   >
                     <LuShoppingBag />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] font-semibold rounded-full px-1.5 py-0.5">
+                        {cartCount}
+                      </span>
+                    )}
                   </Link>
                   {/* User Menu */}
                   <div className="relative" ref={userMenuRef}>
@@ -216,7 +246,14 @@ const NavBar = () => {
                     className="text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
                     aria-label="Cart"
                   >
-                    <LuShoppingBag />
+                    <div className="relative">
+                      <LuShoppingBag />
+                      {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] font-semibold rounded-full px-1.5 py-0.5">
+                          {cartCount}
+                        </span>
+                      )}
+                    </div>
                   </Link>
                 </>
               )}
