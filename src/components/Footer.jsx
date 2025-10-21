@@ -15,7 +15,7 @@ const Footer = () => {
                 <img src={logo1} alt="BookStore Logo" className="h-8 w-8 object-cover " />
               </div>
               <div>
-                <div className="text-xl text-white font-bold">Indian Book House</div>
+                <div className="text-xl text-white font-bold">Indian Books House</div>
                 <div className="text-sm text-neutral-400">Knowledge for nation building</div>
               </div>
             </div>
@@ -80,7 +80,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-neutral-800 mt-8 pt-6 pb-6 text-sm text-neutral-400 flex flex-col md:flex-row items-center justify-between">
-          <div>© {new Date().getFullYear()} Indian Book House. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} Indian Books House. All rights reserved.</div>
           <div className="mt-3 md:mt-0">Made with books · <a href="#" className="hover:text-white">Privacy</a></div>
         </div>
       </div>
