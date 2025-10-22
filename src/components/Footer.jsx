@@ -81,7 +81,7 @@ const Footer = () => {
 
         <div className="border-t border-neutral-800 mt-8 pt-6 pb-6 text-sm text-neutral-400 flex flex-col md:flex-row items-center justify-between">
           <div>© {new Date().getFullYear()} Indian Books House. All rights reserved.</div>
-          <div className="mt-3 md:mt-0">Made with books · <a href="#" className="hover:text-white">Privacy</a></div>
+          <div className="mt-3 md:mt-0">Designed and Developed by <a href="https://kribudwebtech.com" className="hover:text-white">Kribudwebtech</a></div>
         </div>
       </div>
     </footer>
