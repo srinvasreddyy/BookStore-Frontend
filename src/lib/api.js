@@ -1,5 +1,5 @@
 // Use full server URL for production, relative path for development
-export const API_BASE = '/api/v1' ;
+export const API_BASE = '/api/v1'||"'https://connect.indianbookshouse.in/api/v1'"; ;
 
 export async function apiGet(path) {
   const response = await fetch(`${API_BASE}${path}`, {

@@ -16,7 +16,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://bookstore-server-tg0m.onrender.com',
+        target: 'https://connec.indianbookshouse.in',
         changeOrigin: true,
         secure: true,
         credentials: true,
