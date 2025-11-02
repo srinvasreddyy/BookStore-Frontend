@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { apiPost } from '../lib/api';
 import toast from 'react-hot-toast';
 import logo from '../assets/logo.png'; // Adjust path if needed
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -38,7 +39,11 @@ const Register = () => {
         password: formData.password,
       });
       console.log('Registration successful:', response);
-      toast.success('Registration successful! Please log in.');
+      toast.success('Registration successful! Redirecting to login...');
+      // Redirect to login page after successful registration
+      setTimeout(() => {
+        navigate({ to: '/login' });
+      }, 1500);
     } catch (error) {
       console.error('Registration failed:', error);
       toast.error(error.message || 'Registration failed. Please try again.');

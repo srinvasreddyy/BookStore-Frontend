@@ -17,3 +17,13 @@
 .hide-scrollbar::-webkit-scrollbar {
    display: none; /* Safari and Chrome */
 }
+
+/* Hide horizontal scrollbar specifically */
+.hide-horizontal-scroll {
+   overflow-x: auto;
+   -ms-overflow-style: none; /* IE and Edge */
+   scrollbar-width: none; /* Firefox */
+}
+.hide-horizontal-scroll::-webkit-scrollbar {
+   display: none; /* Safari and Chrome */
+}

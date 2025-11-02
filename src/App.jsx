@@ -6,6 +6,7 @@ import Loading from "./components/Loading";
 import Steps from "./components/Home/Steps";
 import Videos from "./components/Home/Videos";
 import YoutubeFrames from "./components/Home/YoutubeFrames";
+import NewArriavals from './components/Home/NewArriavals';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +24,7 @@ const App = () => {
       {/* Main app content */}
       <HeroC />
       <CategoryCards />
+      <NewArriavals/>
       <BestPublications />
       <Steps />
       <YoutubeFrames />

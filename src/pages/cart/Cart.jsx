@@ -47,6 +47,7 @@ const Cart = () => {
         title: item.book.title,
         author: item.book.author,
         price: item.book.price,
+        deliveryCharge: item.book.deliveryCharge || 0,
         quantity: item.quantity,
         image: item.book.coverImages?.[0] || '', // Use first cover image
         stock: item.book.stock,
@@ -184,16 +185,15 @@ const Cart = () => {
     } else if (discount.type === 'FIXED_AMOUNT') {
       return Math.min(discount.value, cartSubtotal); // Don't exceed cart total
     } else if (discount.type === 'FREE_DELIVERY') {
-      return shipping; // Free delivery means no shipping cost
+      return totalDeliveryCharges; // Free delivery means no delivery charges
     }
     return 0;
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  // Match server-side fee calculation: HANDLING_FEE (2.5) + BASE_DELIVERY_FEE (5.0) = 7.5
-  const handlingFee = 2.5;
-  const deliveryFee = cartItems.length > 0 ? 5.0 : 0;
-  const shipping = handlingFee + deliveryFee;
+  // Calculate total delivery charges from each product
+  const totalDeliveryCharges = cartItems.reduce((sum, item) => sum + (item.deliveryCharge * item.quantity), 0);
+  const shipping = totalDeliveryCharges;
   const discountAmount = appliedDiscount ? calculateDiscountAmount(appliedDiscount, subtotal) : 0;
   const total = subtotal + shipping - discountAmount;
 
@@ -312,12 +312,8 @@ const Cart = () => {
                       <span className="font-medium text-gray-900">₹{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Handling Fee</span>
-                      <span className="font-medium text-gray-900">₹{handlingFee.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Delivery Fee</span>
-                      <span className="font-medium text-gray-900">₹{deliveryFee.toFixed(2)}</span>
+                      <span className="text-gray-600">Delivery Charges</span>
+                      <span className="font-medium text-gray-900">₹{totalDeliveryCharges.toFixed(2)}</span>
                     </div>
 
                     {/* Discount Section */}

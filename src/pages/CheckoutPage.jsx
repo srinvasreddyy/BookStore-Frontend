@@ -53,6 +53,7 @@ const CheckoutPage = () => {
         name: item.book.title,
         quantity: item.quantity,
         price: item.book.price,
+        deliveryCharge: item.book.deliveryCharge || 0,
         image: item.book.coverImages?.[0] || ''
       }));
       
@@ -133,8 +134,7 @@ const CheckoutPage = () => {
         // Log frontend calculations for debugging
         console.log('Frontend Calculations:', {
           subtotal: subtotal.toFixed(2),
-          handlingFee: handlingFee.toFixed(2),
-          deliveryFee: deliveryFee.toFixed(2),
+          totalDeliveryCharges: totalDeliveryCharges.toFixed(2),
           discountAmount: discountAmount.toFixed(2),
           totalBill: totalBill.toFixed(2),
           totalBillInPaise: Math.round(totalBill * 100)
@@ -153,8 +153,7 @@ const CheckoutPage = () => {
 
         console.log('Server Response:', {
           orderSubtotal: order.subtotal,
-          orderHandlingFee: order.handlingFee,
-          orderDeliveryFee: order.deliveryFee,
+          orderDeliveryCharges: order.deliveryCharges || order.totalDeliveryCharges,
           orderDiscountAmount: order.discountAmount,
           orderFinalAmount: order.finalAmount,
           razorpayAmount: razorpayOrder.amount,
@@ -257,10 +256,9 @@ const CheckoutPage = () => {
   };
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  // Match server-side fee calculation: HANDLING_FEE (2.5) + BASE_DELIVERY_FEE (5.0) = 7.5
-  const handlingFee = 2.5;
-  const deliveryFee = cartItems.length > 0 ? 5.0 : 0;
-  const shipping = handlingFee + deliveryFee;
+  // Calculate total delivery charges from each product
+  const totalDeliveryCharges = cartItems.reduce((sum, item) => sum + (item.deliveryCharge * item.quantity), 0);
+  const shipping = totalDeliveryCharges;
   const totalBill = subtotal + shipping - discountAmount;
 
   if (loading) {
@@ -436,12 +434,8 @@ const CheckoutPage = () => {
                       <span>₹{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>Handling Fee</span>
-                      <span>₹{handlingFee.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-600">
-                      <span>Delivery Fee</span>
-                      <span>₹{deliveryFee.toFixed(2)}</span>
+                      <span>Delivery Charges</span>
+                      <span>₹{totalDeliveryCharges.toFixed(2)}</span>
                     </div>
                     {appliedDiscount && discountAmount > 0 && (
                       <div className="flex justify-between text-green-600">

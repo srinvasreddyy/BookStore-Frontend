@@ -368,16 +368,18 @@ const NavBar = () => {
                   </div>
                 )}
               </div>
-              <nav className="max-lg:hidden">
-                {MENU_ITEMS.map((menu) => (
-                  <a
-                    key={menu.label}
-                    href={menu.href}
-                    className="ml-6 text-xs font-semibold hover:underline"
-                  >
-                    {menu.label}
-                  </a>
-                ))}
+              <nav className="flex-1 overflow-x-auto hide-horizontal-scroll scrollbar-hide ml-4 lg:ml-6">
+                <div className="flex gap-4  lg:gap-6 whitespace-nowrap">
+                  {MENU_ITEMS.map((menu) => (
+                    <a
+                      key={menu.label}
+                      href={menu.href}
+                      className="text-xs font-semibold hover:underline flex-shrink-0"
+                    >
+                      {menu.label}
+                    </a>
+                  ))}
+                </div>
               </nav>
             </div>
           </div>

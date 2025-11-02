@@ -6,29 +6,29 @@ import toast from 'react-hot-toast'
 
 const FALLBACK_BOOKS = [
   {
-    id: 'b1',
-    title: 'The Great Gatsby',
-    author: 'F. Scott Fitzgerald',
-    price: 249,
-    image: 'https://plus.unsplash.com/premium_photo-1669652639337-c513cc42ead6?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+    id: 'n1',
+    title: 'Atomic Habits',
+    author: 'James Clear',
+    price: 399,
+    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=60&auto=format&fit=crop'
   },
   {
-    id: 'b2',
-    title: 'To Kill a Mockingbird',
-    author: 'Harper Lee',
+    id: 'n2',
+    title: 'The Psychology of Money',
+    author: 'Morgan Housel',
+    price: 349,
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=60&auto=format&fit=crop'
+  },
+  {
+    id: 'n3',
+    title: 'Educated',
+    author: 'Tara Westover',
     price: 299,
-    image: 'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?w=800&q=60&auto=format&fit=crop'
-  },
-  {
-    id: 'b3',
-    title: '1984',
-    author: 'George Orwell',
-    price: 199,
-    image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=60&auto=format&fit=crop'
+    image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=60&auto=format&fit=crop'
   }
 ]
 
-const BestPublications = () => {
+const NewArrivals = () => {
   const [added, setAdded] = useState([]) // list of added book ids
   const [adding, setAdding] = useState(new Set()) // set of ids currently being added
   const [books, setBooks] = useState([])
@@ -41,13 +41,13 @@ const BestPublications = () => {
 
   useEffect(() => {
     let cancelled = false
-    async function fetchBestsellers() {
+    async function fetchNewArrivals() {
       setLoading(true)
       setError(null)
       try {
-        // fetch top 6 bestsellers
-        const res = await apiGet('/books?isBestSeller=true&limit=6')
-        const docs = res.data?.docs || []
+        // fetch top 6 recently added books (sorted by createdAt descending)
+        const res = await apiGet('/books?sort=-createdAt&limit=6')
+        const docs = res.data?.docs.reverse() || []
         const mapped = docs.map(b => ({
           id: b._id,
           title: b.title,
@@ -57,8 +57,8 @@ const BestPublications = () => {
         }))
         if (!cancelled) setBooks(mapped)
       } catch (err) {
-        console.error('Failed to fetch bestsellers:', err)
-        setError('Failed to load bestsellers')
+        console.error('Failed to fetch new arrivals:', err)
+        setError('Failed to load new arrivals')
         // fallback to static list
         if (!cancelled) setBooks(FALLBACK_BOOKS)
       } finally {
@@ -66,7 +66,7 @@ const BestPublications = () => {
       }
     }
 
-    fetchBestsellers()
+    fetchNewArrivals()
     return () => { cancelled = true }
   }, [])
 
@@ -116,11 +116,11 @@ const BestPublications = () => {
   }
 
   return (
-    <section className="py-10 px-4 max-w-7xl mx-auto">
+    <section className="py-5 px-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-xs font-bold text-neutral-500 max-lg:text-[9px] uppercase">Best sellers</p>
-          <h3 className="text-2xl max-lg:text-lg font-bold">Best Publications</h3>
+          <p className="text-xs font-bold text-neutral-500 max-lg:text-[9px] uppercase">Latest books</p>
+          <h3 className="text-2xl max-lg:text-lg font-bold">New Arrivals</h3>
         </div>
         <div className="flex items-center gap-4">
 
@@ -158,7 +158,7 @@ const BestPublications = () => {
                   <button
                     onClick={(e) => { e.preventDefault(); addToCart(book.id) }}
                     disabled={added.includes(book.id)}
-                    className={`px-4 py-2  max-lg:px-3  rounded-md text-xs font-medium transition ${added.includes(book.id) ? 'bg-gray-300 text-gray-700 cursor-default' : 'bg-black text-white hover:bg-neutral-800'}`}
+                    className={`px-4 py-2 max-lg:px-3 rounded-md text-xs font-medium transition ${added.includes(book.id) ? 'bg-gray-300 text-gray-700 cursor-default' : 'bg-black text-white hover:bg-neutral-800'}`}
                   >
                     {added.includes(book.id) ? 'Added' : 'Add to Cart'}
                   </button>
@@ -176,4 +176,4 @@ const BestPublications = () => {
   )
 }
 
-export default BestPublications
+export default NewArrivals
