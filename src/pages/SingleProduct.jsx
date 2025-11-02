@@ -125,7 +125,7 @@ const SingleProduct = () => {
             <div className="lg:col-span-3 relative">
               <div className="relative">
                 <div
-                  className="w-full rounded-xl bg-cover bg-center max-lg:h-[400px] h-[600px] transition-opacity duration-500"
+                  className="w-full rounded-xl bg-contain bg-no-repeat bg-center max-lg:h-[400px] h-[600px] transition-opacity duration-500"
                   style={{
                     backgroundImage: `url(${product.images[currentImage]})`,
                   }}

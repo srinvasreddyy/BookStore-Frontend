@@ -190,7 +190,10 @@ const Cart = () => {
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = cartItems.length > 0 ? 49 : 0;
+  // Match server-side fee calculation: HANDLING_FEE (2.5) + BASE_DELIVERY_FEE (5.0) = 7.5
+  const handlingFee = 2.5;
+  const deliveryFee = cartItems.length > 0 ? 5.0 : 0;
+  const shipping = handlingFee + deliveryFee;
   const discountAmount = appliedDiscount ? calculateDiscountAmount(appliedDiscount, subtotal) : 0;
   const total = subtotal + shipping - discountAmount;
 
@@ -309,8 +312,12 @@ const Cart = () => {
                       <span className="font-medium text-gray-900">₹{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Shipping</span>
-                      <span className="font-medium text-gray-900">₹{shipping.toFixed(2)}</span>
+                      <span className="text-gray-600">Handling Fee</span>
+                      <span className="font-medium text-gray-900">₹{handlingFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Delivery Fee</span>
+                      <span className="font-medium text-gray-900">₹{deliveryFee.toFixed(2)}</span>
                     </div>
 
                     {/* Discount Section */}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 // --- Step 1: Import React Icons ---
 import { FaCreditCard, FaMoneyBillWave } from 'react-icons/fa';
 import { FcSimCardChip } from "react-icons/fc";
-import { getCart, initiateOrder, getRazorpayKey } from '../lib/api';
+import { getCart, initiateOrder, getRazorpayKey, reportPaymentFailure } from '../lib/api';
 import toast from 'react-hot-toast';
 import { Link, useNavigate, useLocation } from '@tanstack/react-router';
 
@@ -113,14 +113,13 @@ const CheckoutPage = () => {
         const orderData = {
           paymentMethod: 'CASH_ON_DELIVERY',
           shippingAddress,
-          appliedDiscount,
-          discountAmount,
+          couponCode: appliedDiscount?.couponCode || null, // Include coupon code for server validation
         };
 
         const response = await initiateOrder(orderData);
         if (response && response.success) {
           toast.success('Order placed successfully!');
-          navigate('/');
+          navigate({ to: '/orders' });
         } else {
           throw new Error('Failed to place order');
         }
@@ -131,18 +130,36 @@ const CheckoutPage = () => {
           return;
         }
 
+        // Log frontend calculations for debugging
+        console.log('Frontend Calculations:', {
+          subtotal: subtotal.toFixed(2),
+          handlingFee: handlingFee.toFixed(2),
+          deliveryFee: deliveryFee.toFixed(2),
+          discountAmount: discountAmount.toFixed(2),
+          totalBill: totalBill.toFixed(2),
+          totalBillInPaise: Math.round(totalBill * 100)
+        });
+
         const orderData = {
           paymentMethod: 'RAZORPAY',
           shippingAddress,
           appliedDiscount,
           discountAmount,
+          couponCode: appliedDiscount?.couponCode || null, // Include coupon code for server validation
         };
 
         const response = await initiateOrder(orderData);
         const { order, razorpayOrder } = response.data;
 
-        console.log('Razorpay order created:', razorpayOrder);
-        console.log('Razorpay key:', razorpayKey);
+        console.log('Server Response:', {
+          orderSubtotal: order.subtotal,
+          orderHandlingFee: order.handlingFee,
+          orderDeliveryFee: order.deliveryFee,
+          orderDiscountAmount: order.discountAmount,
+          orderFinalAmount: order.finalAmount,
+          razorpayAmount: razorpayOrder.amount,
+          razorpayAmountInRupees: (razorpayOrder.amount / 100).toFixed(2)
+        });
 
         // Check if Razorpay is loaded
         if (typeof window.Razorpay === 'undefined') {
@@ -150,19 +167,35 @@ const CheckoutPage = () => {
           return;
         }
 
-        // Initialize Razorpay payment
+        // Initialize Razorpay payment with correct amount
         const options = {
           key: razorpayKey,
-          amount: razorpayOrder.amount,
+          amount: razorpayOrder.amount, // Amount in paise (already calculated on server)
           currency: razorpayOrder.currency,
-          name: 'BookStore',
+          name: 'Indian Books House',
           description: 'Book Purchase',
           order_id: razorpayOrder.id,
-          handler: function (response) {
+          handler: async function (response) {
             console.log('Payment successful:', response);
-            // Payment successful — redirect to home; server webhook will finalize the order
-            toast.success('Payment successful! Order placed.');
-            navigate('/');
+            
+            // Show loading toast
+            const loadingToast = toast.loading('Processing your order...');
+            
+            try {
+              // Wait a bit for webhook to process (optional but recommended)
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              
+              toast.dismiss(loadingToast);
+              toast.success('Payment successful! Your order has been placed.');
+              
+              // Redirect to orders page to see the order
+              navigate({ to: '/orders' });
+            } catch (error) {
+              toast.dismiss(loadingToast);
+              console.error('Error after payment:', error);
+              toast.success('Payment successful! Redirecting...');
+              navigate({ to: '/' });
+            }
           },
           prefill: {
             name: shippingAddress.fullName,
@@ -173,9 +206,18 @@ const CheckoutPage = () => {
             color: '#000000'
           },
           modal: {
-            ondismiss: function() {
-              console.log('Payment cancelled');
-              toast.error('Payment cancelled');
+            ondismiss: async function() {
+              console.log('Payment cancelled by user');
+              
+              // Report the cancellation to server
+              try {
+                await reportPaymentFailure(razorpayOrder.id, 'User cancelled payment');
+              } catch (error) {
+                console.error('Failed to report payment cancellation:', error);
+              }
+              
+              toast.error('Payment was cancelled. Your order has not been placed.');
+              setSubmitting(false);
             }
           }
         };
@@ -184,10 +226,26 @@ const CheckoutPage = () => {
 
         try {
           const rzp = new window.Razorpay(options);
+          
+          rzp.on('payment.failed', async function (response) {
+            console.error('Payment failed:', response);
+            
+            // Report the failure to server
+            try {
+              await reportPaymentFailure(razorpayOrder.id, response.error?.description || 'Payment failed');
+            } catch (error) {
+              console.error('Failed to report payment failure:', error);
+            }
+            
+            toast.error('Payment failed. Please try again.');
+            setSubmitting(false);
+          });
+          
           rzp.open();
         } catch (error) {
           console.error('Error opening Razorpay:', error);
           toast.error('Failed to open payment gateway. Please try again.');
+          setSubmitting(false);
         }
       }
     } catch (error) {
@@ -199,7 +257,10 @@ const CheckoutPage = () => {
   };
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const shipping = cartItems.length > 0 ? 49 : 0;
+  // Match server-side fee calculation: HANDLING_FEE (2.5) + BASE_DELIVERY_FEE (5.0) = 7.5
+  const handlingFee = 2.5;
+  const deliveryFee = cartItems.length > 0 ? 5.0 : 0;
+  const shipping = handlingFee + deliveryFee;
   const totalBill = subtotal + shipping - discountAmount;
 
   if (loading) {
@@ -375,8 +436,12 @@ const CheckoutPage = () => {
                       <span>₹{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
-                      <span>Shipping</span>
-                      <span>₹{shipping.toFixed(2)}</span>
+                      <span>Handling Fee</span>
+                      <span>₹{handlingFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600">
+                      <span>Delivery Fee</span>
+                      <span>₹{deliveryFee.toFixed(2)}</span>
                     </div>
                     {appliedDiscount && discountAmount > 0 && (
                       <div className="flex justify-between text-green-600">

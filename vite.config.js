@@ -16,7 +16,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://connec.indianbookshouse.in',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: true,
         credentials: true,

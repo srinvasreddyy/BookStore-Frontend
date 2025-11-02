@@ -113,9 +113,9 @@ const BestPublications = () => {
         </div>
         <div className="flex items-center gap-4">
 
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <button className='text-sm font-semibold border px-4 py-2 rounded-md max-lg:text-xs'>See More</button>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -134,7 +134,7 @@ const BestPublications = () => {
             <a href={`/product/${book.id}`} key={book.id} className="min-w-[220px] md:min-w-[260px] lg:min-w-[280px] bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="w-full h-44 bg-gray-100">
                 {book.image ? (
-                  <img src={book.image} alt={book.title} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={book.image} alt={book.title} className="w-full h-full object-contain" loading="lazy" />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center text-sm text-gray-500">No image</div>
                 )}

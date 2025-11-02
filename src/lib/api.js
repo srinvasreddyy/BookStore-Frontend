@@ -1,6 +1,6 @@
 // Use full server URL for production, relative path for development
-export const API_BASE = '/api/v1'||"'https://connect.indianbookshouse.in/api/v1'"; ;
-
+// export const API_BASE = '/api/v1'||"'https://connect.indianbookshouse.in/api/v1'"; 
+export const API_BASE = 'http://localhost:8000/api/v1';
 export async function apiGet(path) {
   const response = await fetch(`${API_BASE}${path}`, {
     method: 'GET',
@@ -120,9 +120,18 @@ export async function getUserOrders(params = {}) {
   return apiGet(`/orders${query ? `?${query}` : ''}`);
 }
 
+// Get single order by ID
+export async function getOrderById(orderId) {
+  return apiGet(`/orders/${orderId}`);
+}
+
 // Payment API functions
 export async function getRazorpayKey() {
   return apiGet('/payments/key');
+}
+
+export async function reportPaymentFailure(razorpayOrderId, reason) {
+  return apiPost('/payments/failure', { razorpayOrderId, reason });
 }
 
 // User API functions

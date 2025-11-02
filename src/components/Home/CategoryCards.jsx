@@ -64,7 +64,7 @@ const CategoryCards = () => {
         const mappedCategories = fetchedCategories.map((category) => ({
           name: category.name,
           slug: category.name.toLowerCase().replace(/\s+/g, '-'),
-          image: IMAGE_MAP[category.name] || DEFAULT_IMAGE,
+          image: category.backgroundImage || IMAGE_MAP[category.name] || DEFAULT_IMAGE,
         }));
         
         setCategories(mappedCategories);

@@ -9,6 +9,26 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Function to get status badge styling
+  const getStatusStyle = (status) => {
+    const statusLower = status?.toLowerCase();
+    
+    switch (statusLower) {
+      case 'delivered':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'processing':
+      case 'shipped':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'pending':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'failed':
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -70,7 +90,7 @@ const Orders = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="text-lg font-medium text-gray-900">
-                          Order #{order.id}
+                          Order #{order.id.slice(-8)}
                         </h4>
                         <p className="text-sm text-gray-600">
                           Placed on {new Date(order.date).toLocaleDateString()}
@@ -78,11 +98,11 @@ const Orders = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-medium text-gray-900">
-                          ${order.total}
+                          ₹{order.total.toFixed(2)}
                         </p>
-                        <p className="text-sm text-gray-600 capitalize">
+                        <span className={`inline-block mt-1 px-3 py-1 text-xs font-semibold rounded-full border capitalize ${getStatusStyle(order.status)}`}>
                           {order.status}
-                        </p>
+                        </span>
                       </div>
                     </div>
                     {order.books && order.books.length > 0 && (
