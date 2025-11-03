@@ -18,7 +18,11 @@ function RootComponent() {
 
   // Hide layout for auth routes
   const hideLayout =
-    location.pathname === "/login" || location.pathname === "/register";
+    location.pathname === "/login" ||
+    location.pathname === "/register" ||
+    location.pathname === "/forgot-password" ||
+    location.pathname === "/verify-otp" ||
+    location.pathname === "/reset-password";
 
   // Scroll to top on route change
   React.useEffect(() => {

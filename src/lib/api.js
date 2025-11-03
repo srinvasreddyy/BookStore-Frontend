@@ -139,6 +139,19 @@ export async function getCurrentUser() {
   return apiGet('/users/current-user');
 }
 
+// Password reset API functions
+export async function forgotPassword(email) {
+  return apiPost('/users/forgot-password', { email });
+}
+
+export async function verifyPasswordOTP(email, otp) {
+  return apiPost('/users/verify-otp', { email, otp });
+}
+
+export async function resetPassword(email, otp, newPassword) {
+  return apiPost('/users/reset-password', { email, otp, newPassword });
+}
+
 // Discount API functions
 export async function validateCoupon(couponCode, cartSubtotal) {
   return apiPost('/discounts/validate', { couponCode, cartSubtotal });

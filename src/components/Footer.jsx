@@ -65,11 +65,11 @@ const Footer = () => {
             </div>
             <div className="flex items-start gap-2 text-sm text-neutral-300 mb-3">
               <FiPhone className="mt-1" />
-              <div><a href="tel:+911234567890" className="hover:text-white">+91 12345 67890</a></div>
+              <div><a href="tel:+911234567890" className="hover:text-white">+91 94912 80142</a></div>
             </div>
             <div className="flex items-start gap-2 text-sm text-neutral-300 mb-4">
               <FiMail className="mt-1" />
-              <div><a href="mailto:hello@bookstore.example" className="hover:text-white">hello@indianbookhouse.com</a></div>
+              <div><a href="mailto:hello@bookstore.example" className="hover:text-white">admin@indianbookshouse.in</a></div>
             </div>
             <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
               <label htmlFor="newsletter" className="sr-only">Email address</label>
