@@ -116,7 +116,7 @@ const Orders = () => {
                             )}
                             <div>
                               <div className="font-medium">{b.title}</div>
-                              <div className="text-xs text-gray-600">Qty: {b.quantity} — ${b.price}</div>
+                              <div className="text-xs text-gray-600">Qty: {b.quantity} — &#8377;{b.price}</div>
                             </div>
                           </div>
                         ))}
