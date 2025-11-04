@@ -157,4 +157,9 @@ export async function validateCoupon(couponCode, cartSubtotal) {
   return apiPost('/discounts/validate', { couponCode, cartSubtotal });
 }
 
+// Contact API functions
+export async function getContactDetails() {
+  return apiGet('/contacts');
+}
+
 

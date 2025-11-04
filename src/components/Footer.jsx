@@ -1,9 +1,45 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { RiBookOpenLine } from 'react-icons/ri'
-import { FiMail, FiPhone, FiMapPin } from 'react-icons/fi'
-import { FaFacebookF, FaInstagram, FaTwitter } from 'react-icons/fa'
+import { FiMail, FiPhone, FiMapPin, FiClock } from 'react-icons/fi'
+import { FaFacebookF, FaInstagram, FaTwitter, FaWhatsapp } from 'react-icons/fa'
+import { getContactDetails } from '../lib/api'
 import logo1 from '../assets/logo1.png'
 const Footer = () => {
+  const [contactData, setContactData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchContactData = async () => {
+      try {
+        const response = await getContactDetails()
+        setContactData(response.data)
+      } catch (error) {
+        console.error('Failed to fetch contact data:', error)
+        // Keep default values if fetch fails
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchContactData()
+  }, [])
+
+  // Helper function to format address
+  const formatAddress = (address) => {
+    if (!address) return '891 Hyderabad, Hyderabad, Telangana, 500000, India'
+    
+    const parts = []
+    if (address.street) parts.push(address.street)
+    if (address.city || address.state) {
+      parts.push([address.city, address.state].filter(Boolean).join(', '))
+    }
+    if (address.zipCode || address.country) {
+      parts.push([address.zipCode, address.country].filter(Boolean).join(', '))
+    }
+    
+    return parts.length > 0 ? parts.join(', ') : '891 Hyderabad, Hyderabad, Telangana, 500000, India'
+  }
+
   return (
     <footer className="bg-black text-black pt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,14 +58,41 @@ const Footer = () => {
             <p className="text-sm text-neutral-400">A curated collection of short videos and quick previews to help you find your next read. Follow us for updates and new arrivals.</p>
 
             <div className="flex items-center space-x-3">
-              <a aria-label="Facebook" href="#" className="p-2 rounded bg-white bg-opacity-5 hover:bg-opacity-10 text-black">
+              <a 
+                aria-label="Facebook" 
+                href={contactData?.socialMedia?.facebook || 'https://www.facebook.com/'} 
+                className="p-2 rounded bg-white bg-opacity-5 hover:bg-opacity-10 text-black"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <FaFacebookF />
               </a>
-              <a aria-label="Instagram" href="#" className="p-2 rounded bg-white bg-opacity-5 hover:bg-opacity-10 text-black">
+              <a 
+                aria-label="Instagram" 
+                href={contactData?.socialMedia?.instagram || 'https://www.facebook.com/'} 
+                className="p-2 rounded bg-white bg-opacity-5 hover:bg-opacity-10 text-black"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <FaInstagram />
               </a>
-              <a aria-label="Twitter" href="#" className="p-2 rounded bg-white bg-opacity-5 hover:bg-opacity-10 text-black">
+              <a 
+                aria-label="Twitter" 
+                href={contactData?.socialMedia?.twitter || 'https://www.facebook.com/'} 
+                className="p-2 rounded bg-white bg-opacity-5 hover:bg-opacity-10 text-black"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <FaTwitter />
+              </a>
+              <a 
+                aria-label="WhatsApp" 
+                href={contactData?.socialMedia?.whatsapp || 'https://www.facebook.com/'} 
+                className="p-2 rounded bg-white bg-opacity-5 hover:bg-opacity-10 text-black"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaWhatsapp />
               </a>
             </div>
           </div>
@@ -61,15 +124,33 @@ const Footer = () => {
             <h4 className="text-sm font-semibold mb-3 text-neutral-100">Contact</h4>
             <div className="flex items-start gap-2 text-sm text-neutral-300 mb-3">
               <FiMapPin className="mt-1" />
-              <div>123 Reader Lane, Chapter City, BK 45678</div>
+              <div>{formatAddress(contactData?.address)}</div>
             </div>
             <div className="flex items-start gap-2 text-sm text-neutral-300 mb-3">
               <FiPhone className="mt-1" />
-              <div><a href="tel:+911234567890" className="hover:text-white">+91 94912 80142</a></div>
+              <div>
+                <a 
+                  href={`tel:${contactData?.phone || '+919999999999'}`} 
+                  className="hover:text-white"
+                >
+                  {contactData?.phone || '+91 9999999999'}
+                </a>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 text-sm text-neutral-300 mb-3">
+              <FiMail className="mt-1" />
+              <div>
+                <a 
+                  href={`mailto:${contactData?.email || 'admin@indianbookshouse.in'}`} 
+                  className="hover:text-white"
+                >
+                  {contactData?.email || 'admin@indianbookshouse.in'}
+                </a>
+              </div>
             </div>
             <div className="flex items-start gap-2 text-sm text-neutral-300 mb-4">
-              <FiMail className="mt-1" />
-              <div><a href="mailto:hello@bookstore.example" className="hover:text-white">admin@indianbookshouse.in</a></div>
+              <FiClock className="mt-1" />
+              <div>{contactData?.businessHours || 'Mon-Sat 9:00 - 12:00'}</div>
             </div>
             <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
               <label htmlFor="newsletter" className="sr-only">Email address</label>
