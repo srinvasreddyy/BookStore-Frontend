@@ -7,6 +7,7 @@ import Steps from "./components/Home/Steps";
 import Videos from "./components/Home/Videos";
 import YoutubeFrames from "./components/Home/YoutubeFrames";
 import NewArriavals from './components/Home/NewArriavals';
+import Clients from './components/Home/Clients';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +36,9 @@ const App = () => {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white transition-opacity duration-500">
           <Loading />
         </div>
+      
       )}
+      <Clients />
     </>
   );
 };

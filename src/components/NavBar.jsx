@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { IoSearch } from "react-icons/io5";
 import { TbCircleLetterBFilled } from "react-icons/tb";
 import { LuShoppingBag } from "react-icons/lu";
-import { FiChevronDown, FiMenu, FiX, FiUser, FiLogOut, FiPackage, FiInfo } from "react-icons/fi";
+import { FiChevronDown, FiChevronRight, FiMenu, FiX, FiUser, FiLogOut, FiPackage, FiInfo } from "react-icons/fi";
 import { Link, useNavigate } from "@tanstack/react-router";
 import SearchOverlay from "./SearchOverlay"; // Import the new component
 import { useAuth } from "../contexts/AuthContext";
@@ -28,6 +28,7 @@ const NavBar = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); // State for search overlay
   const [categories, setCategories] = useState([]);
+  const [expandedCategories, setExpandedCategories] = useState(new Set());
 
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -353,16 +354,68 @@ const NavBar = () => {
                   <FiChevronDown className="text-white text-xl" />
                 </button>
                 {openStrip && (
-                  <div className="absolute mt-2 w-56 bg-white text-neutral-900 rounded-md shadow-lg border border-neutral-200 z-40">
-                    <div className="p-2 grid grid-cols-1 gap-1">
-                      {[{ name: "All" }, ...categories].map((cat) => (
-                        <a
-                          key={cat.name}
-                          href={`/products/${cat.name.toLowerCase()}`}                          className="block px-3 py-2 text-sm rounded hover:bg-neutral-100"
-                          onClick={() => setOpenStrip(false)}
-                        >
-                          {cat.name}
-                        </a>
+                  <div className="absolute mt-2 w-72 bg-white text-neutral-900 rounded-md shadow-lg border border-neutral-200 z-40">
+                    <div className="p-2 space-y-2 max-h-80 overflow-auto">
+                      {/* All link */}
+                      <a
+                        href="/products/all"
+                        className="block px-3 py-2 text-sm rounded hover:bg-neutral-100 font-medium"
+                        onClick={() => setOpenStrip(false)}
+                      >
+                        All
+                      </a>
+
+                      {/* Categories with subcategories */}
+                      {categories.map((cat) => (
+                        <div key={cat._id} className="group">
+                          <div className="flex items-center">
+                            <a
+                              href={`/products/${cat._id}`}
+                              className="flex-1 px-3 py-2 text-sm rounded-l hover:bg-neutral-100 font-semibold"
+                              onClick={() => setOpenStrip(false)}
+                            >
+                              {cat.name}
+                            </a>
+                            {cat.subCategories && cat.subCategories.length > 0 && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setExpandedCategories(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(cat._id)) {
+                                      next.delete(cat._id);
+                                    } else {
+                                      next.add(cat._id);
+                                    }
+                                    return next;
+                                  });
+                                }}
+                                className="p-2 hover:bg-neutral-100 rounded-r"
+                              >
+                                {expandedCategories.has(cat._id) ? (
+                                  <FiChevronDown className="text-neutral-500" />
+                                ) : (
+                                  <FiChevronRight className="text-neutral-500" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+
+                          {cat.subCategories && cat.subCategories.length > 0 && expandedCategories.has(cat._id) && (
+                            <div className="ml-3 mt-1 border-l-2 border-neutral-100">
+                              {cat.subCategories.map((sub) => (
+                                <a
+                                  key={sub._id}
+                                  href={`/products/${cat._id}?sub=${sub._id}`}
+                                  className="block px-3 py-1.5 text-sm rounded hover:bg-neutral-100 text-neutral-700"
+                                  onClick={() => setOpenStrip(false)}
+                                >
+                                  {sub.name}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>

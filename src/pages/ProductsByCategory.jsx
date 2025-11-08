@@ -98,11 +98,19 @@ const ProductsByCategory = () => {
           }
 
           setCurrentCategory(categoryObj);
+          // Check for optional subcategory in the URL search params
+          const searchParams = new URLSearchParams(window.location.search);
+          const subId = searchParams.get('sub');
 
-          // Fetch books for this category
-          const response = await getBooksByCategory(categoryObj._id);
+          // Fetch books for this category, optionally filter by subCategory
+          const response = await getBooksByCategory(categoryObj._id, subId ? { subCategory: subId } : {});
           const books = response.data?.docs || [];
 
+          // If subId is present, try to attach current subcategory name for UI header
+          if (subId) {
+            const subObj = (categoryObj.subCategories || []).find(s => s._id === subId || s._id === String(subId));
+            if (subObj) setCurrentCategory(prev => ({ ...categoryObj, currentSub: subObj }));
+          }
           // Transform books to match the expected product format
           const transformedProducts = books.map(book => ({
             id: book._id,
@@ -134,7 +142,7 @@ const ProductsByCategory = () => {
     fetchProducts();
   }, [category, categories]);
 
-  const categoryName = currentCategory?.name || category.charAt(0).toUpperCase() + category.slice(1);
+  const categoryName = currentCategory?.currentSub?.name || currentCategory?.name || (category ? category.charAt(0).toUpperCase() + category.slice(1) : '');
 
   // Sort products
   const sortedProducts = [...products].sort((a, b) => {

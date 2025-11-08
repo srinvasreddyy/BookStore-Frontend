@@ -1,6 +1,6 @@
 // Use full server URL for production, relative path for development
-export const API_BASE = "https://connect.indianbookshouse.in/api/v1"; 
-
+// export const API_BASE = "https://connect.indianbookshouse.in/api/v1"; 
+export const API_BASE = "http://localhost:8000/api/v1"
 export async function apiGet(path) {
   const response = await fetch(`${API_BASE}${path}`, {
     method: 'GET',
@@ -71,7 +71,7 @@ export async function apiDelete(path) {
 
 // Category API functions
 export async function getAllCategories() {
-  return apiGet('/categories/all');
+  return apiGet('/categories');
 }
 
 export async function getGlobalCategories() {

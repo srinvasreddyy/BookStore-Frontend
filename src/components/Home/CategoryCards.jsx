@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { getAllCategories } from "../../lib/api";
+import { FiChevronRight, FiX } from "react-icons/fi";
 
 const IMAGE_MAP = {
   "Classic": "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=1200&q=80&auto=format&fit=crop",
@@ -52,8 +53,52 @@ const CATEGORIES = [
   },
 ];
 
+const SubCategoryModal = ({ category, onClose }) => {
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg w-full max-w-lg relative">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-b-neutral-300">
+          <h3 className="text-lg font-semibold">{category.name} Categories</h3>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
+          >
+            <FiX className="text-xl" />
+          </button>
+        </div>
+        
+        {/* Subcategories Grid */}
+        <div className="p-4 grid grid-cols-2 gap-3">
+          {category.subCategories.map((sub) => (
+            <Link
+              key={sub._id}
+              to={`/products/${category._id}`}
+              search={{ sub: sub._id }}
+              onClick={onClose}
+              className="flex items-center p-3 rounded-lg border-neutral-300 border hover:bg-neutral-50 transition-colors"
+            >
+              <div>
+                <p className="font-medium">{sub.name}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CategoryCards = () => {
   const [categories, setCategories] = useState(CATEGORIES);
+  const [activeCategory, setActiveCategory] = useState(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -62,9 +107,11 @@ const CategoryCards = () => {
         const fetchedCategories = response.data || [];
         
         const mappedCategories = fetchedCategories.map((category) => ({
+          _id: category._id,
           name: category.name,
           slug: category.name.toLowerCase().replace(/\s+/g, '-'),
           image: category.backgroundImage || IMAGE_MAP[category.name] || DEFAULT_IMAGE,
+          subCategories: category.subCategories || [],
         }));
         
         setCategories(mappedCategories);
@@ -88,38 +135,58 @@ const CategoryCards = () => {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 max-lg:hidden">
         {categories.map((category) => (
-          <Link
+          <div
             key={category.slug}
-            to={`/products/${category.name.toLowerCase()}`}
-            params={{ category: category.slug }}
-            // The 'group' class is key for the hover effects on child elements
-            className="relative group h-60 max-lg:h-48 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out"
+            className="relative h-60 max-lg:h-48"
+            ref={activeCategory === category._id ? popupRef : null}
           >
-            <img
-              src={category.image}
-              alt={category.name}
-              // Image zooms in on hover of the parent 'group'
-              className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
-            />
-            
-            {/* Dark overlay for text readability, darkens on hover */}
-            <div className="absolute inset-0 bg-black/50 bg-opacity-40 group-hover:bg-opacity-60 transition-all duration-300"></div>
+            <div 
+              className="relative h-full cursor-pointer"
+              onClick={() => {
+                if (category.subCategories?.length > 0) {
+                  setActiveCategory(category);
+                }
+              }}
+            >
+              <div className="block relative h-full rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out group">
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
+                />
+                
+                {/* Dark overlay for text readability, darkens on hover */}
+                <div className="absolute inset-0 bg-black/50 bg-opacity-40 group-hover:bg-opacity-60 transition-all duration-300"></div>
 
-            {/* Centered content container */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-              <h3 
-                className="text-white text-2xl font-bold tracking-wide transform transition-transform duration-300 group-hover:scale-105"
-              >
-                {category.name}
-              </h3>
-              <p 
-                // This text fades in on hover
-                className="max-lg:hidden text-white text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              >
-                Shop Now
-              </p>
+                {/* Centered content container */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                  <h3 
+                    className="text-white text-2xl font-bold tracking-wide transform transition-transform duration-300 group-hover:scale-105"
+                  >
+                    {category.name}
+                  </h3>
+                  {category.subCategories?.length > 0 ? (
+                    <div className="flex items-center gap-1 mt-2">
+                      <p className="text-white text-sm">
+                       Shop Now
+                      </p>
+                      <FiChevronRight className="text-white text-lg" />
+                    </div>
+                  ) : (
+                    <p className="text-white text-sm mt-2">Shop Now</p>
+                  )}
+                </div>
+
+                {/* If no subcategories, make the whole card a link */}
+                {!category.subCategories?.length && (
+                  <Link
+                    to={`/products/${category._id}`}
+                    className="absolute inset-0"
+                  />
+                )}
+              </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
@@ -127,38 +194,66 @@ const CategoryCards = () => {
       <div className="lg:hidden overflow-x-auto scrollbar-hide">
         <div className="flex gap-4 pb-4">
           {categories.map((category) => (
-            <Link
+            <div
               key={category.slug}
-              to={`/products/${category.name.toLowerCase()}`}
-              params={{ category: category.slug }}
-              className="relative group flex-shrink-0 w-48 h-48 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out"
+              className="relative flex-shrink-0 w-48 h-48"
             >
-              <img
-                src={category.image}
-                alt={category.name}
-                className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
-              />
+              <div
+                className="relative h-full cursor-pointer"
+                onClick={() => {
+                  if (category.subCategories?.length > 0) {
+                    setActiveCategory(category);
+                  }
+                }}
+              >
+                <div className="block relative h-full rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out group">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
+                  />
 
-              {/* Dark overlay for text readability, darkens on hover */}
-              <div className="absolute inset-0 bg-black/50 bg-opacity-40 group-hover:bg-opacity-60 transition-all duration-300"></div>
+                  {/* Dark overlay for text readability, darkens on hover */}
+                  <div className="absolute inset-0 bg-black/50 bg-opacity-40 group-hover:bg-opacity-60 transition-all duration-300"></div>
 
-              {/* Centered content container */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                <h3
-                  className="text-white text-xl font-bold tracking-wide transform transition-transform duration-300 group-hover:scale-105"
-                >
-                  {category.name}
-                </h3>
-                <p
-                  className="text-white text-sm mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                >
-                  Shop Now
-                </p>
+                  {/* Centered content container */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                    <h3
+                      className="text-white text-xl font-bold tracking-wide transform transition-transform duration-300 group-hover:scale-105"
+                    >
+                      {category.name}
+                    </h3>
+                    {category.subCategories?.length > 0 ? (
+                      <div className="flex items-center gap-1 mt-2">
+                        <p className="text-white text-sm">Shop Now</p>
+                        <FiChevronRight className="text-white text-lg" />
+                      </div>
+                    ) : (
+                      <p className="text-white text-sm mt-2">Shop Now</p>
+                    )}
+                  </div>
+
+                  {/* If no subcategories, make the whole card a link */}
+                  {!category.subCategories?.length && (
+                    <Link
+                      to={`/products/${category._id}`}
+                      className="absolute inset-0"
+                    />
+                  )}
+                </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>
+
+      {/* Full-screen Subcategories Modal */}
+      {activeCategory && (
+        <SubCategoryModal
+          category={activeCategory}
+          onClose={() => setActiveCategory(null)}
+        />
+      )}
     </div>
   );
 };
