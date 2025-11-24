@@ -1,6 +1,7 @@
 // Use full server URL for production, relative path for development
-export const API_BASE = "https://connect.indianbookshouse.in/api/v1"; 
-// export const API_BASE = "http://localhost:8000/api/v1"
+// export const API_BASE = "https://connect.indianbookshouse.in/api/v1"; 
+export const API_BASE = "http://localhost:8000/api/v1"
+
 export async function apiGet(path) {
   const response = await fetch(`${API_BASE}${path}`, {
     method: 'GET',
@@ -34,7 +35,6 @@ export async function apiPost(path, data) {
       const errorData = await response.json();
       errorMessage = errorData.message || errorMessage;
     } catch (e) {
-      // If response is not JSON, use the text
       const text = await response.text().catch(() => '');
       if (text) errorMessage = text;
     }
@@ -59,7 +59,6 @@ export async function apiDelete(path) {
       const errorData = await response.json();
       errorMessage = errorData.message || errorMessage;
     } catch (e) {
-      // If response is not JSON, use the text
       const text = await response.text().catch(() => '');
       if (text) errorMessage = text;
     }
@@ -82,7 +81,7 @@ export async function getGlobalCategories() {
 export async function getBooksByCategory(categoryId, params = {}) {
   const queryParams = new URLSearchParams({
     category: categoryId,
-    limit: '50', // Get more books per page
+    limit: '50',
     ...params
   });
   return apiGet(`/books?${queryParams}`);
@@ -114,13 +113,11 @@ export async function initiateOrder(orderData) {
   return apiPost('/orders/initiate', orderData);
 }
 
-// Fetch orders for current authenticated user
 export async function getUserOrders(params = {}) {
   const query = new URLSearchParams(params).toString();
   return apiGet(`/orders${query ? `?${query}` : ''}`);
 }
 
-// Get single order by ID
 export async function getOrderById(orderId) {
   return apiGet(`/orders/${orderId}`);
 }
@@ -139,7 +136,6 @@ export async function getCurrentUser() {
   return apiGet('/users/current-user');
 }
 
-// Password reset API functions
 export async function forgotPassword(email) {
   return apiPost('/users/forgot-password', { email });
 }
@@ -162,4 +158,12 @@ export async function getContactDetails() {
   return apiGet('/contacts');
 }
 
+// --- ADDED MISSING EXPORTS HERE ---
 
+export async function getSpecials() {
+  return apiGet('/specials');
+}
+
+export async function getFreeContent() {
+  return apiGet('/free-content');
+}

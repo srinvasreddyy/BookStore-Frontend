@@ -53,6 +53,7 @@ const BestPublications = () => {
           title: b.title,
           author: b.author,
           price: b.price,
+          salePrice: b.salePrice, // Added salePrice
           image: b.coverImages?.[0] || ''
         }))
         if (!cancelled) setBooks(mapped)
@@ -142,7 +143,7 @@ const BestPublications = () => {
           )}
 
           {!loading && books.map(book => (
-            <a href={`/product/${book.id}`} key={book.id} className="min-w-[220px] md:min-w-[260px] lg:min-w-[280px] bg-white rounded-lg shadow-sm overflow-hidden">
+            <a href={`/product/${book.id}`} key={book.id} className="min-w-[220px] md:min-w-[260px] lg:min-w-[280px] bg-white rounded-lg shadow-sm overflow-hidden block">
               <div className="w-full h-44 bg-gray-100">
                 {book.image ? (
                   <img src={book.image} alt={book.title} className="w-full h-full object-contain" loading="lazy" />
@@ -153,12 +154,21 @@ const BestPublications = () => {
               <div className="p-3">
                 <h4 className="text-sm font-semibold text-neutral-900 mb-1 line-clamp-2">{book.title}</h4>
                 <div className="text-xs text-neutral-600 mb-2">{book.author}</div>
-                <div className="flex items-center justify-between mt-2">
-                  <div className="text-lg font-bold text-neutral-900">₹{book.price}</div>
+                <div className="flex items-end justify-between mt-2 gap-2">
+                  <div className="flex flex-col">
+                    {book.salePrice ? (
+                      <>
+                        <span className="text-lg font-bold text-neutral-900 leading-none">₹{book.salePrice}</span>
+                        <span className="text-xs text-gray-500 line-through mt-0.5">₹{book.price}</span>
+                      </>
+                    ) : (
+                      <span className="text-lg font-bold text-neutral-900">₹{book.price}</span>
+                    )}
+                  </div>
                   <button
                     onClick={(e) => { e.preventDefault(); addToCart(book.id) }}
                     disabled={added.includes(book.id)}
-                    className={`px-4 py-2  max-lg:px-3  rounded-md text-xs font-medium transition ${added.includes(book.id) ? 'bg-gray-300 text-gray-700 cursor-default' : 'bg-black text-white hover:bg-neutral-800'}`}
+                    className={`px-4 py-2  max-lg:px-3  rounded-md text-xs font-medium transition whitespace-nowrap ${added.includes(book.id) ? 'bg-gray-300 text-gray-700 cursor-default' : 'bg-black text-white hover:bg-neutral-800'}`}
                   >
                     {added.includes(book.id) ? 'Added' : 'Add to Cart'}
                   </button>

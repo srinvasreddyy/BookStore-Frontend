@@ -47,6 +47,7 @@ const SingleProduct = () => {
           title: book.title,
           author: book.author,
           price: book.price,
+          salePrice: book.salePrice, // Added salePrice
           description: book.fullDescription || book.shortDescription,
           publisher: book.publisher,
           publishedYear: book.createdAt ? new Date(book.createdAt).getFullYear() : 'N/A',
@@ -169,9 +170,18 @@ const SingleProduct = () => {
                   {product.title}
                 </h1>
                 <p className="mt-2 text-lg text-black/60">{product.author}</p>
-                <p className="mt-4 max-lg:mt-2 text-2xl sm:text-3xl font-bold text-primary">
-                  ₹{product.price}
-                </p>
+                <div className="mt-4 max-lg:mt-2">
+                  {product.salePrice ? (
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl sm:text-3xl font-bold text-primary">₹{product.salePrice}</span>
+                      <span className="text-lg sm:text-xl text-gray-500 line-through">₹{product.price}</span>
+                    </div>
+                  ) : (
+                    <p className="text-2xl sm:text-3xl font-bold text-primary">
+                      ₹{product.price}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Book Details */}

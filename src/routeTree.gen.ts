@@ -10,11 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
+import { Route as SpecialsRouteImport } from './routes/specials'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as OldBooksRouteImport } from './routes/old-books'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as FreeRouteImport } from './routes/free'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
@@ -26,6 +29,11 @@ import { Route as ProductIdRouteImport } from './routes/product/$id'
 const VerifyOtpRoute = VerifyOtpRouteImport.update({
   id: '/verify-otp',
   path: '/verify-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpecialsRoute = SpecialsRouteImport.update({
+  id: '/specials',
+  path: '/specials',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -43,6 +51,11 @@ const OrdersRoute = OrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OldBooksRoute = OldBooksRouteImport.update({
+  id: '/old-books',
+  path: '/old-books',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MediaRoute = MediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -51,6 +64,11 @@ const MediaRoute = MediaRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreeRoute = FreeRouteImport.update({
+  id: '/free',
+  path: '/free',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -95,11 +113,14 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/free': typeof FreeRoute
   '/login': typeof LoginRoute
   '/media': typeof MediaRoute
+  '/old-books': typeof OldBooksRoute
   '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/specials': typeof SpecialsRoute
   '/verify-otp': typeof VerifyOtpRoute
   '/product/$id': typeof ProductIdRoute
   '/products/$category': typeof ProductsCategoryRoute
@@ -110,11 +131,14 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/free': typeof FreeRoute
   '/login': typeof LoginRoute
   '/media': typeof MediaRoute
+  '/old-books': typeof OldBooksRoute
   '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/specials': typeof SpecialsRoute
   '/verify-otp': typeof VerifyOtpRoute
   '/product/$id': typeof ProductIdRoute
   '/products/$category': typeof ProductsCategoryRoute
@@ -126,11 +150,14 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/free': typeof FreeRoute
   '/login': typeof LoginRoute
   '/media': typeof MediaRoute
+  '/old-books': typeof OldBooksRoute
   '/orders': typeof OrdersRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/specials': typeof SpecialsRoute
   '/verify-otp': typeof VerifyOtpRoute
   '/product/$id': typeof ProductIdRoute
   '/products/$category': typeof ProductsCategoryRoute
@@ -143,11 +170,14 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/forgot-password'
+    | '/free'
     | '/login'
     | '/media'
+    | '/old-books'
     | '/orders'
     | '/register'
     | '/reset-password'
+    | '/specials'
     | '/verify-otp'
     | '/product/$id'
     | '/products/$category'
@@ -158,11 +188,14 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/forgot-password'
+    | '/free'
     | '/login'
     | '/media'
+    | '/old-books'
     | '/orders'
     | '/register'
     | '/reset-password'
+    | '/specials'
     | '/verify-otp'
     | '/product/$id'
     | '/products/$category'
@@ -173,11 +206,14 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/forgot-password'
+    | '/free'
     | '/login'
     | '/media'
+    | '/old-books'
     | '/orders'
     | '/register'
     | '/reset-password'
+    | '/specials'
     | '/verify-otp'
     | '/product/$id'
     | '/products/$category'
@@ -189,11 +225,14 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  FreeRoute: typeof FreeRoute
   LoginRoute: typeof LoginRoute
   MediaRoute: typeof MediaRoute
+  OldBooksRoute: typeof OldBooksRoute
   OrdersRoute: typeof OrdersRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SpecialsRoute: typeof SpecialsRoute
   VerifyOtpRoute: typeof VerifyOtpRoute
   ProductIdRoute: typeof ProductIdRoute
   ProductsCategoryRoute: typeof ProductsCategoryRoute
@@ -206,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/verify-otp'
       fullPath: '/verify-otp'
       preLoaderRoute: typeof VerifyOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/specials': {
+      id: '/specials'
+      path: '/specials'
+      fullPath: '/specials'
+      preLoaderRoute: typeof SpecialsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -229,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/old-books': {
+      id: '/old-books'
+      path: '/old-books'
+      fullPath: '/old-books'
+      preLoaderRoute: typeof OldBooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/media': {
       id: '/media'
       path: '/media'
@@ -241,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/free': {
+      id: '/free'
+      path: '/free'
+      fullPath: '/free'
+      preLoaderRoute: typeof FreeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -301,11 +361,14 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  FreeRoute: FreeRoute,
   LoginRoute: LoginRoute,
   MediaRoute: MediaRoute,
+  OldBooksRoute: OldBooksRoute,
   OrdersRoute: OrdersRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SpecialsRoute: SpecialsRoute,
   VerifyOtpRoute: VerifyOtpRoute,
   ProductIdRoute: ProductIdRoute,
   ProductsCategoryRoute: ProductsCategoryRoute,

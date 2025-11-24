@@ -69,7 +69,7 @@ const ProductsByCategory = () => {
             title: book.title,
             author: book.author,
             price: book.price,
-            originalPrice: Math.round(book.price * 1.5), // Estimate original price
+            salePrice: book.salePrice, // Use real salePrice
             rating: 4.5, // Default rating since not in model
             reviews: 0, // Default reviews count
             image: book.coverImages?.[0] || '', // Use first cover image
@@ -117,7 +117,7 @@ const ProductsByCategory = () => {
             title: book.title,
             author: book.author,
             price: book.price,
-            originalPrice: Math.round(book.price * 1.5), // Estimate original price
+            salePrice: book.salePrice, // Use real salePrice
             rating: 4.5, // Default rating since not in model
             reviews: 0, // Default reviews count
             image: book.coverImages?.[0] || '', // Use first cover image
@@ -144,13 +144,16 @@ const ProductsByCategory = () => {
 
   const categoryName = currentCategory?.currentSub?.name || currentCategory?.name || (category ? category.charAt(0).toUpperCase() + category.slice(1) : '');
 
+  // Helper to get the effective price for sorting
+  const getPrice = (p) => p.salePrice || p.price;
+
   // Sort products
   const sortedProducts = [...products].sort((a, b) => {
     switch (sortBy) {
       case 'price-low':
-        return a.price - b.price;
+        return getPrice(a) - getPrice(b);
       case 'price-high':
-        return b.price - a.price;
+        return getPrice(b) - getPrice(a);
       case 'rating':
         return b.rating - a.rating;
       default:
@@ -257,8 +260,14 @@ const ProductsByCategory = () => {
                     <span className="text-xs text-gray-500">({product.reviews})</span>
                   </div>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg font-bold">₹{product.price}</span>
-                    <span className="text-sm text-gray-500 line-through">₹{product.originalPrice}</span>
+                    {product.salePrice ? (
+                      <>
+                        <span className="text-lg font-bold">₹{product.salePrice}</span>
+                        <span className="text-sm text-gray-500 line-through">₹{product.price}</span>
+                      </>
+                    ) : (
+                      <span className="text-lg font-bold">₹{product.price}</span>
+                    )}
                   </div>
                   {product.inStock ? (
                     <button 
@@ -305,9 +314,15 @@ const ProductsByCategory = () => {
                     </div>
                   </div>
                   <div className="flex flex-col items-start sm:items-end justify-between">
-                    <div className="mb-3">
-                      <div className="text-2xl font-bold mb-1">₹{product.price}</div>
-                      <div className="text-sm text-gray-500 line-through">₹{product.originalPrice}</div>
+                    <div className="mb-3 flex flex-col sm:items-end">
+                      {product.salePrice ? (
+                        <>
+                          <div className="text-2xl font-bold mb-1">₹{product.salePrice}</div>
+                          <div className="text-sm text-gray-500 line-through">₹{product.price}</div>
+                        </>
+                      ) : (
+                        <div className="text-2xl font-bold mb-1">₹{product.price}</div>
+                      )}
                     </div>
                     {product.inStock ? (
                       <button 

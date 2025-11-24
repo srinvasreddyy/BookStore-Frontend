@@ -1,32 +1,31 @@
 // src/components/NavBar.js
 import React, { useState, useRef, useEffect } from "react";
 import { IoSearch } from "react-icons/io5";
-import { TbCircleLetterBFilled } from "react-icons/tb";
 import { LuShoppingBag } from "react-icons/lu";
 import { FiChevronDown, FiChevronRight, FiMenu, FiX, FiUser, FiLogOut, FiPackage, FiInfo } from "react-icons/fi";
 import { Link, useNavigate } from "@tanstack/react-router";
-import SearchOverlay from "./SearchOverlay"; // Import the new component
+import SearchOverlay from "./SearchOverlay"; 
 import { useAuth } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
 import { apiPost } from "../lib/api";
 import { getAllCategories } from "../lib/api";
 import { getCart } from "../lib/api";
 import logo from "../assets/logo.png";
+
+// Updated Menu Items
 const MENU_ITEMS = [
-  { label: "Discover", href: "/discover" },
-  { label: "Other Products", href: "/other-products" },
-  { label: "Grow with us", href: "/grow" },
   { label: "About Us", href: "/about" },
+  { label: "Old Books", href: "/old-books" },
   { label: "Media Coverage", href: "/media" },
   { label: "Free Content", href: "/free" },
-  { label: "Blogs", href: "/blogs" },
+  { label: "Specials", href: "/specials", isSpecial: true },
 ];
 
 const NavBar = () => {
   const [openStrip, setOpenStrip] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false); // State for search overlay
+  const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [categories, setCategories] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState(new Set());
 
@@ -38,7 +37,6 @@ const NavBar = () => {
   const menuRef = useRef(null);
   const userMenuRef = useRef(null);
 
-  // A cleaner useEffect hook for closing modals
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (stripRef.current && !stripRef.current.contains(e.target)) {
@@ -69,7 +67,6 @@ const NavBar = () => {
     };
   }, []);
 
-  // Prevent body scroll when search overlay is open
   useEffect(() => {
     document.body.style.overflow = isSearchOpen ? "hidden" : "auto";
     return () => {
@@ -77,7 +74,6 @@ const NavBar = () => {
     };
   }, [isSearchOpen]);
 
-  // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -85,13 +81,11 @@ const NavBar = () => {
         setCategories(response.data || []);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
-        // Fallback to empty array or default categories if needed
       }
     };
     fetchCategories();
   }, []);
 
-  // Fetch cart count when auth changes or on mount
   useEffect(() => {
     let cancelled = false;
     async function fetchCartCount() {
@@ -123,7 +117,6 @@ const NavBar = () => {
       navigate({ to: '/' });
     } catch (error) {
       console.error('Logout failed:', error);
-      // Even if API call fails, clear local state
       logout();
       setUserMenuOpen(false);
       toast.success('Logged out successfully');
@@ -147,6 +140,13 @@ const NavBar = () => {
     </button>
   );
 
+  // Helper to get display name
+  const getDisplayName = () => {
+    if (!user) return 'Guest';
+    // Prioritize fullName, then name, then email, then fallback
+    return user.fullName || user.name || user.email?.split('@')[0] || 'My Account';
+  };
+
   return (
     <>
       <header className="w-full bg-white sticky top-0 z-50">
@@ -154,7 +154,6 @@ const NavBar = () => {
           <div className="flex items-center justify-between h-fit max-lg:h-fit">
             {/* Logo */}
             <div className="flex items-center gap-1 py-2">
-              
               <a
                 href="/"
                 className="font-extrabold tracking-tight text-neutral-900 uppercase"
@@ -195,7 +194,7 @@ const NavBar = () => {
                       aria-label="User menu"
                     >
                       <FiUser className="text-lg" />
-                      <span className="hidden sm:inline">{user?.fullName || 'User'}</span>
+                      <span className="hidden sm:inline">{getDisplayName()}</span>
                       <FiChevronDown className="text-sm" />
                     </button>
 
@@ -275,7 +274,7 @@ const NavBar = () => {
                     {isAuthenticated ? (
                       <>
                         <div className="px-4 py-2 text-sm font-medium text-neutral-900 border-b border-neutral-200">
-                          {user?.fullName || 'User'}
+                          {getDisplayName()}
                         </div>
                         <Link
                           to="/orders"
@@ -317,13 +316,13 @@ const NavBar = () => {
                         >
                           Register
                         </Link>
-                        <a
-                          href="#about"
+                        <Link
+                          to="/about"
                           className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           About
-                        </a>
+                        </Link>
                       </>
                     )}
                   </div>
@@ -357,25 +356,25 @@ const NavBar = () => {
                   <div className="absolute mt-2 w-72 bg-white text-neutral-900 rounded-md shadow-lg border border-neutral-200 z-40">
                     <div className="p-2 space-y-2 max-h-80 overflow-auto">
                       {/* All link */}
-                      <a
-                        href="/products/all"
+                      <Link
+                        to="/products/all"
                         className="block px-3 py-2 text-sm rounded hover:bg-neutral-100 font-medium"
                         onClick={() => setOpenStrip(false)}
                       >
                         All
-                      </a>
+                      </Link>
 
                       {/* Categories with subcategories */}
                       {categories.map((cat) => (
                         <div key={cat._id} className="group">
                           <div className="flex items-center">
-                            <a
-                              href={`/products/${cat._id}`}
+                            <Link
+                              to={`/products/${cat._id}`}
                               className="flex-1 px-3 py-2 text-sm rounded-l hover:bg-neutral-100 font-semibold"
                               onClick={() => setOpenStrip(false)}
                             >
                               {cat.name}
-                            </a>
+                            </Link>
                             {cat.subCategories && cat.subCategories.length > 0 && (
                               <button
                                 onClick={(e) => {
@@ -404,14 +403,14 @@ const NavBar = () => {
                           {cat.subCategories && cat.subCategories.length > 0 && expandedCategories.has(cat._id) && (
                             <div className="ml-3 mt-1 border-l-2 border-neutral-100">
                               {cat.subCategories.map((sub) => (
-                                <a
+                                <Link
                                   key={sub._id}
-                                  href={`/products/${cat._id}?sub=${sub._id}`}
+                                  to={`/products/${cat._id}?sub=${sub._id}`}
                                   className="block px-3 py-1.5 text-sm rounded hover:bg-neutral-100 text-neutral-700"
                                   onClick={() => setOpenStrip(false)}
                                 >
                                   {sub.name}
-                                </a>
+                                </Link>
                               ))}
                             </div>
                           )}
@@ -421,16 +420,22 @@ const NavBar = () => {
                   </div>
                 )}
               </div>
+              
+              {/* Secondary Navigation - Scrollable on Mobile */}
               <nav className="flex-1 overflow-x-auto hide-horizontal-scroll scrollbar-hide ml-4 lg:ml-6">
-                <div className="flex gap-4  lg:gap-6 whitespace-nowrap">
+                <div className="flex items-center gap-4 lg:gap-6 whitespace-nowrap">
                   {MENU_ITEMS.map((menu) => (
-                    <a
+                    <Link
                       key={menu.label}
-                      href={menu.href}
-                      className="text-xs font-semibold hover:underline flex-shrink-0"
+                      to={menu.href}
+                      className={`text-xs font-semibold flex-shrink-0 transition-all duration-200 ${
+                        menu.isSpecial 
+                          ? "bg-yellow-400 text-neutral-900 px-3 py-1.5 rounded-sm hover:bg-yellow-500 shadow-md font-bold uppercase tracking-wide"
+                          : "hover:underline text-neutral-100"
+                      }`}
                     >
                       {menu.label}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </nav>
