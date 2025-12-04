@@ -1,360 +1,324 @@
-import React, { useState, useEffect } from 'react';
+// src/pages/ProductsByCategory.jsx
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from '@tanstack/react-router';
-import { FiGrid, FiList, FiChevronDown, FiShoppingCart } from 'react-icons/fi';
-import { getAllCategories, getBooksByCategory, apiGet, addItemToCart } from '../lib/api';
+import { FiGrid, FiList, FiChevronDown, FiShoppingCart, FiChevronRight, FiFolder, FiArrowLeft } from 'react-icons/fi';
+import { getAllCategories, apiGet, addItemToCart } from '../lib/api';
 import toast from 'react-hot-toast';
 
+// Helper to recursively find a category and its path in the tree
+const findCategoryPath = (categories, targetId) => {
+  for (const cat of categories) {
+    if (cat._id === targetId) return [cat];
+    if (cat.children && cat.children.length > 0) {
+      const path = findCategoryPath(cat.children, targetId);
+      if (path) return [cat, ...path];
+    }
+  }
+  return null;
+};
+
 const ProductsByCategory = () => {
-  const { category } = useParams({ from: '/products/$category' });
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const { category: categoryId } = useParams({ from: '/products/$category' });
+  
+  const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('popular');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentCategory, setCurrentCategory] = useState(null);
-  const [addingToCart, setAddingToCart] = useState(new Set()); // Track which items are being added
+  const [addingToCart, setAddingToCart] = useState(new Set());
 
-  const addToCart = async (bookId) => {
-    try {
-      setAddingToCart(prev => new Set(prev).add(bookId));
-      await addItemToCart(bookId, 1);
-      toast.success('Added to cart!');
-    } catch (err) {
-      console.error('Failed to add to cart:', err);
-      toast.error('Failed to add to cart');
-    } finally {
-      setAddingToCart(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(bookId);
-        return newSet;
-      });
-    }
-  };
+  // Derive current category path from the full tree
+  const currentCategoryPath = useMemo(() => 
+    categoryId && categoryId !== 'all' ? findCategoryPath(categories, categoryId) : [], 
+  [categories, categoryId]);
+  
+  // The current active category object
+  const currentCategory = currentCategoryPath ? currentCategoryPath[currentCategoryPath.length - 1] : null;
+  
+  // Subcategories to display for drilling down
+  const subCategories = currentCategory?.children || [];
 
-  // Fetch categories on mount
+  // Fetch Full Category Tree
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchCats = async () => {
       try {
-        const response = await getAllCategories();
-        setCategories(response.data || []);
+        const res = await getAllCategories();
+        setCategories(res.data || []);
       } catch (err) {
-        console.error('Failed to fetch categories:', err);
-        setError('Failed to load categories');
+        console.error("Category fetch error", err);
       }
     };
-    fetchCategories();
+    fetchCats();
   }, []);
 
-  // Fetch products when category changes
+  // Fetch Products based on current category
   useEffect(() => {
     const fetchProducts = async () => {
-      if (!category) return;
-
       setLoading(true);
       setError(null);
-
       try {
-        if (category.toLowerCase() === "all") {
-          setCurrentCategory({ name: "All" });
-
-          // Fetch all books
-          const response = await apiGet('/books');
-          const books = response.data?.docs || [];
-
-          // Transform books to match the expected product format
-          const transformedProducts = books.map(book => ({
-            id: book._id,
-            title: book.title,
-            author: book.author,
-            price: book.price,
-            salePrice: book.salePrice, // Use real salePrice
-            rating: 4.5, // Default rating since not in model
-            reviews: 0, // Default reviews count
-            image: book.coverImages?.[0] || '', // Use first cover image
-            inStock: book.stock > 0,
-            stock: book.stock,
-            format: book.format,
-            language: book.language,
-            shortDescription: book.shortDescription,
-          }));
-
-          setProducts(transformedProducts);
-        } else {
-          if (categories.length === 0) return;
-
-          // Find the category object by name or ID
-          const categoryObj = categories.find(cat =>
-            cat.name.toLowerCase() === category.toLowerCase() || cat._id === category
-          );
-
-          if (!categoryObj) {
-            setError('Category not found');
-            setProducts([]);
-            setCurrentCategory(null);
-            setLoading(false);
-            return;
-          }
-
-          setCurrentCategory(categoryObj);
-          // Check for optional subcategory in the URL search params
-          const searchParams = new URLSearchParams(window.location.search);
-          const subId = searchParams.get('sub');
-
-          // Fetch books for this category, optionally filter by subCategory
-          const response = await getBooksByCategory(categoryObj._id, subId ? { subCategory: subId } : {});
-          const books = response.data?.docs || [];
-
-          // If subId is present, try to attach current subcategory name for UI header
-          if (subId) {
-            const subObj = (categoryObj.subCategories || []).find(s => s._id === subId || s._id === String(subId));
-            if (subObj) setCurrentCategory(prev => ({ ...categoryObj, currentSub: subObj }));
-          }
-          // Transform books to match the expected product format
-          const transformedProducts = books.map(book => ({
-            id: book._id,
-            title: book.title,
-            author: book.author,
-            price: book.price,
-            salePrice: book.salePrice, // Use real salePrice
-            rating: 4.5, // Default rating since not in model
-            reviews: 0, // Default reviews count
-            image: book.coverImages?.[0] || '', // Use first cover image
-            inStock: book.stock > 0,
-            stock: book.stock,
-            format: book.format,
-            language: book.language,
-            shortDescription: book.shortDescription,
-          }));
-
-          setProducts(transformedProducts);
+        let endpoint = '/books';
+        // If not 'all', filter by specific category ID
+        // Note: Ideally, the backend should return books for this category AND its subcategories.
+        if (categoryId && categoryId !== 'all') {
+          endpoint += `?category=${categoryId}`;
         }
+
+        const response = await apiGet(endpoint);
+        const docs = response.data?.docs || [];
+        
+        const mapped = docs.map(b => ({
+          id: b._id,
+          title: b.title,
+          author: b.author,
+          price: b.price,
+          salePrice: b.salePrice,
+          image: b.coverImages?.[0] || '',
+          rating: 4.5,
+          reviews: 0,
+          stock: b.stock,
+          inStock: b.stock > 0
+        }));
+        setProducts(mapped);
       } catch (err) {
-        console.error('Failed to fetch products:', err);
-        setError('Failed to load products');
-        setProducts([]);
+        console.error(err);
+        setError('Failed to load books.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
-  }, [category, categories]);
-
-  const categoryName = currentCategory?.currentSub?.name || currentCategory?.name || (category ? category.charAt(0).toUpperCase() + category.slice(1) : '');
-
-  // Helper to get the effective price for sorting
-  const getPrice = (p) => p.salePrice || p.price;
-
-  // Sort products
-  const sortedProducts = [...products].sort((a, b) => {
-    switch (sortBy) {
-      case 'price-low':
-        return getPrice(a) - getPrice(b);
-      case 'price-high':
-        return getPrice(b) - getPrice(a);
-      case 'rating':
-        return b.rating - a.rating;
-      default:
-        return 0;
+    if (categories.length > 0 || categoryId === 'all') {
+        fetchProducts();
     }
+  }, [categoryId, categories]);
+
+  const addToCart = async (e, id) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAddingToCart(prev => new Set(prev).add(id));
+    try {
+      await addItemToCart(id, 1);
+      toast.success('Added to cart');
+      window.dispatchEvent(new CustomEvent('cart-updated'));
+    } catch (err) {
+      if (err.message?.includes('401')) toast.error('Please login first');
+      else toast.error('Failed to add to cart');
+    } finally {
+      setAddingToCart(prev => { const s = new Set(prev); s.delete(id); return s; });
+    }
+  };
+
+  const sortedProducts = [...products].sort((a, b) => {
+    const pA = a.salePrice || a.price;
+    const pB = b.salePrice || b.price;
+    if (sortBy === 'price-low') return pA - pB;
+    if (sortBy === 'price-high') return pB - pA;
+    return 0; 
   });
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b border-neutral-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center text-sm text-gray-600">
-            <Link to="/" className="hover:text-black">Home</Link>
-            <span className="mx-2">/</span>
-            <span className="text-black font-medium">{categoryName}</span>
+    <div className="min-h-screen bg-neutral-50 font-sans">
+      {/* 1. Breadcrumb Navigation */}
+      <div className="bg-white border-b border-neutral-200 sticky top-20 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center h-14 overflow-x-auto scrollbar-hide whitespace-nowrap">
+            <Link to="/" className="text-sm text-neutral-500 hover:text-black transition-colors">Home</Link>
+            <FiChevronRight className="mx-2 text-neutral-300 text-sm flex-shrink-0" />
+            <Link to="/products/all" className={`text-sm hover:text-black transition-colors ${categoryId === 'all' ? 'font-bold text-black' : 'text-neutral-500'}`}>
+              All Books
+            </Link>
+            
+            {currentCategoryPath?.map((cat) => (
+              <React.Fragment key={cat._id}>
+                <FiChevronRight className="mx-2 text-neutral-300 text-sm flex-shrink-0" />
+                <Link 
+                  to={`/products/${cat._id}`}
+                  className={`text-sm hover:text-black transition-colors ${cat._id === categoryId ? 'font-bold text-black' : 'text-neutral-500'}`}
+                >
+                  {cat.name}
+                </Link>
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl max-lg:text-xl font-bold text-gray-900 mb-2">{categoryName} Books</h1>
-          <p className="text-gray-600 max-lg:text-xs text-sm">
-            {loading ? 'Loading...' : `${products.length} products found`}
-          </p>
-        </div>
-
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-600">{error}</p>
+        
+        {/* 2. Sub-Category Tiles (Visual Navigation) */}
+        {subCategories.length > 0 && (
+          <div className="mb-10 animate-fadeIn">
+            <div className="flex items-center gap-2 mb-4 text-neutral-900 font-bold uppercase tracking-wider text-xs">
+              <FiFolder className="text-neutral-400" />
+              <span>Explore Subcategories</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {subCategories.map(sub => (
+                <Link
+                  key={sub._id}
+                  to={`/products/${sub._id}`}
+                  className="bg-white p-4 rounded-xl border border-neutral-200 hover:border-black hover:shadow-md transition-all group flex flex-col items-center text-center gap-2"
+                >
+                  {sub.backgroundImage ? (
+                    <img src={sub.backgroundImage} alt={sub.name} className="w-10 h-10 object-cover rounded-full" />
+                  ) : (
+                    <div className="w-10 h-10 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-400 group-hover:bg-neutral-900 group-hover:text-white transition-colors">
+                      <FiFolder />
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-neutral-700 group-hover:text-black line-clamp-1">
+                    {sub.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Filters & View Controls */}
-        {!loading && !error && products.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {/* Sort Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowSortDropdown(!showSortDropdown)}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
-                >
-                  <span>Sort by: {sortBy === 'popular' ? 'Popular' : sortBy === 'price-low' ? 'Price: Low to High' : sortBy === 'price-high' ? 'Price: High to Low' : 'Rating'}</span>
-                  <FiChevronDown />
-                </button>
-                {showSortDropdown && (
-                  <div className="absolute top-full mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                    <button onClick={() => { setSortBy('popular'); setShowSortDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm">Popular</button>
-                    <button onClick={() => { setSortBy('price-low'); setShowSortDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm">Price: Low to High</button>
-                    <button onClick={() => { setSortBy('price-high'); setShowSortDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm">Price: High to Low</button>
-                    <button onClick={() => { setSortBy('rating'); setShowSortDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm">Rating</button>
-                  </div>
-                )}
-              </div>
+        {/* 3. Controls Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">
+              {currentCategory ? currentCategory.name : 'All Books'}
+            </h1>
+            <p className="text-sm text-neutral-500 mt-1">
+              {loading ? 'Loading...' : `${products.length} books available`}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Sort Dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                className="flex items-center gap-2 text-sm font-medium bg-white border border-neutral-200 px-4 py-2.5 rounded-lg hover:border-neutral-400 transition-colors"
+              >
+                <span className="text-neutral-500">Sort:</span>
+                <span className="text-neutral-900">{sortBy === 'popular' ? 'Popular' : sortBy === 'price-low' ? 'Low to High' : 'High to Low'}</span>
+                <FiChevronDown className="text-neutral-400" />
+              </button>
+              
+              {showSortDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-neutral-100 shadow-xl rounded-xl py-1 z-40 overflow-hidden animate-fadeIn">
+                  {['popular', 'price-low', 'price-high'].map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => { setSortBy(opt); setShowSortDropdown(false); }}
+                      className={`block w-full text-left px-4 py-2.5 text-sm transition-colors ${sortBy === opt ? 'bg-neutral-50 font-bold text-black' : 'text-neutral-600 hover:bg-neutral-50'}`}
+                    >
+                      {opt === 'popular' ? 'Popular' : opt === 'price-low' ? 'Price: Low to High' : 'Price: High to Low'}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* View Toggle */}
-            <div className="flex items-center gap-2 border border-gray-300 rounded-lg p-1">
+            <div className="flex bg-white border border-neutral-200 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-neutral-100 text-black shadow-sm' : 'text-neutral-400 hover:text-black'}`}
               >
                 <FiGrid size={18} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded ${viewMode === 'list' ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-neutral-100 text-black shadow-sm' : 'text-neutral-400 hover:text-black'}`}
               >
                 <FiList size={18} />
               </button>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+        {/* 4. Products Grid */}
+        {loading ? (
+          <div className="py-20 flex justify-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-2 border-neutral-900 border-t-transparent"></div>
           </div>
-        )}
-
-        {/* Products Grid/List */}
-        {!loading && !error && viewMode === 'grid' && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+        ) : products.length > 0 ? (
+          <div className={viewMode === 'grid' 
+            ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6" 
+            : "space-y-4 max-w-3xl mx-auto"
+          }>
             {sortedProducts.map((product) => (
               <Link
                 key={product.id}
-                to="/product/$id"
-                params={{ id: String(product.id) }}
-                className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                to={`/product/${product.id}`}
+                className={`group block bg-white rounded-xl overflow-hidden border border-neutral-200 transition-all hover:shadow-lg hover:border-neutral-300 ${
+                  viewMode === 'list' ? 'flex gap-4 p-4' : ''
+                }`}
               >
-                <div className="aspect-[3/4] bg-gray-100">
-                  <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
-                </div>
-                <div className="p-3 sm:p-4">
-                  <h3 className="font-semibold text-sm sm:text-base mb-1 line-clamp-2">{product.title}</h3>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-2">{product.author}</p>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-yellow-500 text-sm">★ {product.rating}</span>
-                    <span className="text-xs text-gray-500">({product.reviews})</span>
-                  </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    {product.salePrice ? (
-                      <>
-                        <span className="text-lg font-bold">₹{product.salePrice}</span>
-                        <span className="text-sm text-gray-500 line-through">₹{product.price}</span>
-                      </>
-                    ) : (
-                      <span className="text-lg font-bold">₹{product.price}</span>
-                    )}
-                  </div>
-                  {product.inStock ? (
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        addToCart(product.id);
-                      }}
-                      disabled={addingToCart.has(product.id)}
-                      className="w-full bg-black text-white py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <FiShoppingCart size={16} />
-                      {addingToCart.has(product.id) ? 'Adding...' : 'Add to Cart'}
-                    </button>
+                <div className={`relative bg-neutral-100 overflow-hidden ${
+                  viewMode === 'list' ? 'w-24 sm:w-32 aspect-[2/3] rounded-lg flex-shrink-0' : 'aspect-[2/3]'
+                }`}>
+                  {product.image ? (
+                    <img src={product.image} alt={product.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   ) : (
-                    <button disabled className="w-full bg-gray-300 text-gray-600 py-2 rounded-lg text-xs sm:text-sm font-medium cursor-not-allowed">
-                      Out of Stock
-                    </button>
+                    <div className="w-full h-full flex items-center justify-center text-neutral-300"><FiFolder size={32} /></div>
+                  )}
+                  {product.salePrice && (
+                    <div className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                      SALE
+                    </div>
                   )}
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
 
-        {!loading && !error && viewMode === 'list' && (
-          <div className="space-y-4">
-            {sortedProducts.map((product) => (
-              <Link
-                key={product.id}
-                to="/product/$id"
-                params={{ id: String(product.id) }}
-                className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow flex"
-              >
-                <div className="w-32 sm:w-48 flex-shrink-0 bg-gray-100">
-                  <img src={product.image} alt={product.title} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1 p-4 sm:p-6 flex flex-col sm:flex-row justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-base sm:text-lg mb-1">{product.title}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{product.author}</p>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-yellow-500">★ {product.rating}</span>
-                      <span className="text-sm text-gray-500">({product.reviews} reviews)</span>
-                    </div>
+                <div className={`flex flex-col ${viewMode === 'list' ? 'flex-1 justify-between' : 'p-4'}`}>
+                  <div>
+                    <h3 className="font-bold text-neutral-900 leading-tight mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      {product.title}
+                    </h3>
+                    <p className="text-xs text-neutral-500 mb-3">{product.author}</p>
                   </div>
-                  <div className="flex flex-col items-start sm:items-end justify-between">
-                    <div className="mb-3 flex flex-col sm:items-end">
+                  
+                  <div className="flex items-end justify-between mt-auto">
+                    <div>
                       {product.salePrice ? (
                         <>
-                          <div className="text-2xl font-bold mb-1">₹{product.salePrice}</div>
-                          <div className="text-sm text-gray-500 line-through">₹{product.price}</div>
+                          <div className="text-lg font-bold text-neutral-900">₹{product.salePrice}</div>
+                          <div className="text-xs text-neutral-400 line-through">₹{product.price}</div>
                         </>
                       ) : (
-                        <div className="text-2xl font-bold mb-1">₹{product.price}</div>
+                        <div className="text-lg font-bold text-neutral-900">₹{product.price}</div>
                       )}
                     </div>
+                    
                     {product.inStock ? (
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          addToCart(product.id);
-                        }}
+                      <button
+                        onClick={(e) => addToCart(e, product.id)}
                         disabled={addingToCart.has(product.id)}
-                        className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-blue-600 transition-colors shadow-sm disabled:opacity-50"
                       >
-                        <FiShoppingCart size={16} />
-                        {addingToCart.has(product.id) ? 'Adding...' : 'Add to Cart'}
+                        {addingToCart.has(product.id) ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <FiShoppingCart size={16} />
+                        )}
                       </button>
                     ) : (
-                      <button disabled className="bg-gray-300 text-gray-600 px-6 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
-                        Out of Stock
-                      </button>
+                      <span className="text-[10px] font-bold uppercase text-red-500 bg-red-50 px-2 py-1 rounded">Sold Out</span>
                     )}
                   </div>
                 </div>
               </Link>
             ))}
           </div>
-        )}
-
-        {/* No Products Message */}
-        {!loading && !error && products.length === 0 && (
-          <div className="bg-white rounded-lg p-12 text-center">
-            <p className="text-gray-500 text-lg mb-4">No products found in this category.</p>
-            <Link to="/" className="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800">
-              Back to Home
-            </Link>
+        ) : (
+          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-neutral-300">
+            <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4 text-neutral-400">
+              <FiFolder size={24} />
+            </div>
+            <p className="text-lg font-medium text-neutral-900">No books found.</p>
+            <p className="text-sm text-neutral-500 mb-6">Try selecting a different subcategory.</p>
+            {categoryId !== 'all' && (
+              <Link to="/products/all" className="inline-flex items-center gap-2 px-6 py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors">
+                <FiArrowLeft /> View All Books
+              </Link>
+            )}
           </div>
         )}
       </div>

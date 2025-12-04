@@ -1,4 +1,4 @@
-// src/components/NavBar.js
+// src/components/NavBar.jsx
 import React, { useState, useRef, useEffect } from "react";
 import { IoSearch } from "react-icons/io5";
 import { LuShoppingBag } from "react-icons/lu";
@@ -7,12 +7,9 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import SearchOverlay from "./SearchOverlay"; 
 import { useAuth } from "../contexts/AuthContext";
 import toast from "react-hot-toast";
-import { apiPost } from "../lib/api";
-import { getAllCategories } from "../lib/api";
-import { getCart } from "../lib/api";
+import { apiPost, getAllCategories, getCart } from "../lib/api";
 import logo from "../assets/logo.png";
 
-// Updated Menu Items
 const MENU_ITEMS = [
   { label: "About Us", href: "/about" },
   { label: "Old Books", href: "/old-books" },
@@ -27,7 +24,9 @@ const NavBar = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [categories, setCategories] = useState([]);
-  const [expandedCategories, setExpandedCategories] = useState(new Set());
+  
+  // Mobile Category State for Accordion
+  const [mobileExpanded, setMobileExpanded] = useState({});
 
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -37,53 +36,17 @@ const NavBar = () => {
   const menuRef = useRef(null);
   const userMenuRef = useRef(null);
 
+  // --- Data Fetching ---
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (stripRef.current && !stripRef.current.contains(e.target)) {
-        setOpenStrip(false);
-      }
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMobileMenuOpen(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
-      }
-    };
-
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setOpenStrip(false);
-        setMobileMenuOpen(false);
-        setUserMenuOpen(false);
-        setIsSearchOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = isSearchOpen ? "hidden" : "auto";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isSearchOpen]);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getAllCategories();
-        setCategories(response.data || []);
+        const catRes = await getAllCategories();
+        setCategories(catRes.data || []);
       } catch (error) {
-        console.error('Failed to fetch categories:', error);
+        console.error('Failed to fetch navbar data:', error);
       }
     };
-    fetchCategories();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -102,11 +65,21 @@ const NavBar = () => {
       }
     }
     fetchCartCount();
-
     const onCartUpdated = () => { fetchCartCount(); };
     window.addEventListener('cart-updated', onCartUpdated);
     return () => { cancelled = true; window.removeEventListener('cart-updated', onCartUpdated); };
   }, [isAuthenticated]);
+
+  // --- Event Listeners ---
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (stripRef.current && !stripRef.current.contains(e.target)) setOpenStrip(false);
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMobileMenuOpen(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -116,335 +89,322 @@ const NavBar = () => {
       toast.success('Logged out successfully');
       navigate({ to: '/' });
     } catch (error) {
-      console.error('Logout failed:', error);
       logout();
-      setUserMenuOpen(false);
-      toast.success('Logged out successfully');
       navigate({ to: '/' });
     }
+  };
+
+  const toggleMobileCategory = (id) => {
+    setMobileExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const SearchTriggerButton = ({ className }) => (
     <button
       onClick={() => setIsSearchOpen(true)}
-      className={`flex items-center shadow-xs bg-neutral-50 rounded-md border border-neutral-200 overflow-hidden text-left ${className}`}
-      aria-label="Open search"
+      className={`flex items-center bg-neutral-50 rounded-full border border-neutral-200 overflow-hidden text-left hover:border-neutral-400 transition-colors shadow-sm ${className}`}
     >
-      <span className="flex-1 px-4 text-xs text-neutral-500">
-        What are you looking for?
+      <span className="flex-1 px-4 text-xs sm:text-sm text-neutral-500 truncate">
+        Search for books, authors...
       </span>
-      <div className="h-8 px-3 bg-neutral-900 text-white text-xs flex items-center gap-2">
-        <IoSearch className="text-xs" />
-        <span className="hidden sm:inline font-semibold">Search</span>
+      <div className="h-full aspect-square bg-neutral-900 text-white flex items-center justify-center">
+        <IoSearch className="text-sm" />
       </div>
     </button>
   );
 
-  // Helper to get display name
-  const getDisplayName = () => {
-    if (!user) return 'Guest';
-    // Prioritize fullName, then name, then email, then fallback
-    return user.fullName || user.name || user.email?.split('@')[0] || 'My Account';
+  // Recursive Component for Desktop Hover Menu
+  const CategoryItem = ({ category }) => {
+    const hasChildren = category.children && category.children.length > 0;
+    
+    return (
+      <div className="group/item relative w-full">
+        <Link
+          to={`/products/${category._id}`}
+          className="flex items-center justify-between px-4 py-3 text-sm text-neutral-700 hover:bg-neutral-50 hover:text-black transition-colors w-full"
+          onClick={() => setOpenStrip(false)}
+        >
+          <span>{category.name}</span>
+          {hasChildren && <FiChevronRight className="text-neutral-400 text-xs" />}
+        </Link>
+        
+        {/* Nested Dropdown */}
+        {hasChildren && (
+          <div className="absolute left-full top-0 w-64 bg-white border border-neutral-200 shadow-xl rounded-r-md hidden group-hover/item:block z-50 min-h-full animate-fadeIn">
+            <div className="py-2">
+              <div className="px-4 py-2 border-b border-neutral-100 bg-neutral-50">
+                <span className="text-[10px] font-bold uppercase text-neutral-500 tracking-wider">
+                  {category.name}
+                </span>
+              </div>
+              {category.children.map(child => (
+                <CategoryItem key={child._id} category={child} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Recursive Component for Mobile Accordion
+  const MobileCategoryItem = ({ category, depth = 0 }) => {
+    const hasChildren = category.children && category.children.length > 0;
+    const isExpanded = mobileExpanded[category._id];
+
+    return (
+      <div className={`border-l-2 ${depth > 0 ? 'border-neutral-200 ml-3' : 'border-transparent'}`}>
+        <div className="flex items-center justify-between pr-2 py-2">
+          <Link 
+            to={`/products/${category._id}`}
+            className="text-base text-neutral-800 font-medium block flex-1 pl-2 active:text-blue-600 transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            {category.name}
+          </Link>
+          {hasChildren && (
+            <button 
+              onClick={(e) => { e.preventDefault(); toggleMobileCategory(category._id); }}
+              className={`p-2 rounded-full transition-colors ${isExpanded ? 'bg-neutral-100 text-black' : 'text-neutral-400'}`}
+            >
+              {isExpanded ? <FiChevronDown /> : <FiChevronRight />}
+            </button>
+          )}
+        </div>
+        
+        {/* Expandable Children */}
+        <div 
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          {hasChildren && category.children.map(child => (
+            <MobileCategoryItem key={child._id} category={child} depth={depth + 1} />
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
     <>
-      <header className="w-full bg-white sticky top-0 z-50">
+      <header className="w-full bg-white sticky top-0 z-50 shadow-sm transition-all duration-300">
+        
+        {/* Main Bar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-fit max-lg:h-fit">
-            {/* Logo */}
-            <div className="flex items-center gap-1 py-2">
-              <a
-                href="/"
-                className="font-extrabold tracking-tight text-neutral-900 uppercase"
-              >
-                <img src={logo} alt="BookStore Logo" className="h-20 max-lg:h-20 w-auto" />
-              </a>
-            </div>
+          <div className="flex items-center justify-between py-3 lg:py-4 gap-4">
+            
+            {/* Logo - Increased Size */}
+            <Link to="/" className="flex-shrink-0 transition-transform active:scale-95">
+              <img 
+                src={logo} 
+                alt="BookStore" 
+                className="h-14 lg:h-20 w-auto object-contain" 
+              />
+            </Link>
 
             {/* Desktop Search */}
-            <div className="flex-1 max-lg:hidden flex justify-center px-4">
-              <div className="w-8/12">
-                <SearchTriggerButton className="w-full" />
-              </div>
+            <div className="hidden lg:block flex-1 max-w-xl mx-8">
+              <SearchTriggerButton className="w-full h-11" />
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3">
+            {/* Desktop Actions */}
+            <div className="hidden lg:flex items-center gap-6">
               {isAuthenticated ? (
                 <>
-                  <Link
-                    to="/cart"
-                    className="relative text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
-                    aria-label="Cart"
-                  >
-                    <LuShoppingBag />
+                  <Link to="/cart" className="relative p-2 text-neutral-700 hover:text-black transition-colors">
+                    <LuShoppingBag size={24} />
                     {cartCount > 0 && (
-                      <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] font-semibold rounded-full px-1.5 py-0.5">
+                      <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
                         {cartCount}
                       </span>
                     )}
                   </Link>
-                  {/* User Menu */}
                   <div className="relative" ref={userMenuRef}>
                     <button
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
-                      className="flex items-center gap-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 transition-colors"
-                      aria-expanded={userMenuOpen}
-                      aria-label="User menu"
+                      className="flex items-center gap-2 p-1 pr-3 rounded-full border border-neutral-200 hover:shadow-md transition-all"
                     >
-                      <FiUser className="text-lg" />
-                      <span className="hidden sm:inline">{getDisplayName()}</span>
-                      <FiChevronDown className="text-sm" />
+                      <div className="w-8 h-8 bg-neutral-900 text-white rounded-full flex items-center justify-center">
+                        <FiUser size={16} />
+                      </div>
+                      <span className="text-sm font-medium">{user.fullName?.split(' ')[0]}</span>
+                      <FiChevronDown size={14} />
                     </button>
-
                     {userMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-neutral-200 z-50 py-2">
-                        <Link
-                          to="/orders"
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <FiPackage className="text-lg" />
-                          My Orders
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-neutral-100 overflow-hidden animate-slideDown origin-top-right">
+                        <Link to="/orders" className="flex items-center gap-3 px-5 py-3 text-sm hover:bg-neutral-50" onClick={() => setUserMenuOpen(false)}>
+                          <FiPackage /> My Orders
                         </Link>
-                        <Link
-                          to="/about"
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <FiInfo className="text-lg" />
-                          About
-                        </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                        >
-                          <FiLogOut className="text-lg" />
-                          Logout
+                        <button onClick={handleLogout} className="flex items-center gap-3 w-full px-5 py-3 text-sm text-red-600 hover:bg-red-50 text-left">
+                          <FiLogOut /> Logout
                         </button>
                       </div>
                     )}
                   </div>
                 </>
               ) : (
-                <>
-                  <Link
-                    to="/register"
-                    className="hidden md:inline text-xs uppercase font-semibold px-4 py-2 rounded-md"
-                  >
-                    Register
-                  </Link>
-                  <Link
-                    to="/login"
-                    className="hidden md:inline bg-neutral-900 text-white text-xs uppercase font-semibold px-10 py-2 rounded-md"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/cart"
-                    className="text-xl text-neutral-700 hover:text-neutral-900 transition-colors"
-                    aria-label="Cart"
-                  >
-                    <div className="relative">
-                      <LuShoppingBag />
-                      {cartCount > 0 && (
-                        <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] font-semibold rounded-full px-1.5 py-0.5">
-                          {cartCount}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                </>
+                <div className="flex gap-3">
+                  <Link to="/login" className="px-5 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 rounded-lg">Login</Link>
+                  <Link to="/register" className="px-5 py-2.5 text-sm font-semibold bg-black text-white rounded-lg hover:bg-neutral-800 shadow-lg shadow-neutral-200">Sign Up</Link>
+                </div>
               )}
+            </div>
 
-              {/* Mobile Menu */}
-              <div className="relative md:hidden" ref={menuRef}>
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="ml-2 p-2 text-neutral-700 hover:bg-neutral-100 rounded-md"
-                  aria-expanded={mobileMenuOpen}
-                  aria-label="Toggle menu"
-                >
-                  {mobileMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
-                </button>
-
-                {mobileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-neutral-200 z-50 py-2">
-                    {isAuthenticated ? (
-                      <>
-                        <div className="px-4 py-2 text-sm font-medium text-neutral-900 border-b border-neutral-200">
-                          {getDisplayName()}
-                        </div>
-                        <Link
-                          to="/orders"
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <FiPackage className="text-lg" />
-                          My Orders
-                        </Link>
-                        <Link
-                          to="/about"
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <FiInfo className="text-lg" />
-                          About
-                        </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center gap-3 w-full px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                        >
-                          <FiLogOut className="text-lg" />
-                          Logout
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <Link
-                          to="/login"
-                          className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          Login
-                        </Link>
-                        <Link
-                          to="/register"
-                          className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          Register
-                        </Link>
-                        <Link
-                          to="/about"
-                          className="block px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          About
-                        </Link>
-                      </>
-                    )}
-                  </div>
+            {/* Mobile Actions */}
+            <div className="flex lg:hidden items-center gap-3">
+              <SearchTriggerButton className="w-8 h-8 p-0 border-0 bg-transparent shadow-none [&>span]:hidden [&>div]:bg-transparent [&>div]:text-neutral-800 [&>div]:text-xl" />
+              
+              <Link to="/cart" className="relative p-2 text-neutral-800">
+                <LuShoppingBag size={24} />
+                {cartCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                    {cartCount}
+                  </span>
                 )}
-              </div>
+              </Link>
+
+              <button 
+                onClick={() => setMobileMenuOpen(true)}
+                className="p-2 text-neutral-800"
+              >
+                <FiMenu size={28} />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Mobile Search */}
-        <div className="flex-1 lg:hidden flex justify-center px-2">
-          <div className="w-full mb-3">
-            <SearchTriggerButton className="w-full" />
+        {/* Mobile Horizontal Scroll Menu */}
+        <div className="lg:hidden w-full border-t border-b border-neutral-100 bg-neutral-50/50 backdrop-blur-sm">
+          <div className="flex items-center gap-4 overflow-x-auto px-4 py-3 scrollbar-hide">
+            <Link 
+              to="/products/all"
+              className="flex-shrink-0 text-sm font-semibold text-neutral-900 whitespace-nowrap px-3 py-1 bg-white rounded-full border border-neutral-200 shadow-sm"
+            >
+              Shop All
+            </Link>
+            {MENU_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={`flex-shrink-0 text-sm font-medium whitespace-nowrap px-2 ${
+                  item.isSpecial ? 'text-amber-600 font-bold' : 'text-neutral-600'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
 
-        {/* Shop by category and navigation */}
-        <div className="bg-neutral-900 text-neutral-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center py-2">
-              <div className="relative" ref={stripRef}>
+        {/* Desktop Secondary Navigation */}
+        <div className="hidden lg:block border-t border-neutral-100 bg-neutral-50">
+          <div className="max-w-7xl mx-auto px-8">
+            <div className="flex items-center gap-8 h-12 text-xs font-bold uppercase tracking-widest text-neutral-500">
+              <div className="relative h-full flex items-center" ref={stripRef}>
                 <button
-                  onClick={() => setOpenStrip((s) => !s)}
-                  aria-expanded={openStrip}
-                  className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-neutral-800/60 rounded-md text-xs font-semibold uppercase"
+                  onClick={() => setOpenStrip(!openStrip)}
+                  className={`flex items-center gap-2 h-full hover:text-black transition-colors ${openStrip ? 'text-black' : ''}`}
                 >
-                  Shop by category
-                  <FiChevronDown className="text-white text-xl" />
+                  <FiMenu size={16} />
+                  <span>Shop By Category</span>
                 </button>
                 {openStrip && (
-                  <div className="absolute mt-2 w-72 bg-white text-neutral-900 rounded-md shadow-lg border border-neutral-200 z-40">
-                    <div className="p-2 space-y-2 max-h-80 overflow-auto">
-                      {/* All link */}
-                      <Link
-                        to="/products/all"
-                        className="block px-3 py-2 text-sm rounded hover:bg-neutral-100 font-medium"
-                        onClick={() => setOpenStrip(false)}
-                      >
-                        All
+                  <div className="absolute top-full left-0 w-72 bg-white border border-neutral-200 shadow-2xl rounded-b-lg z-40 animate-slideDown">
+                    <div className="py-2">
+                      <Link to="/products/all" className="block px-4 py-3 text-sm font-bold text-black hover:bg-neutral-50 border-b border-neutral-100" onClick={() => setOpenStrip(false)}>
+                        Browse All Books
                       </Link>
-
-                      {/* Categories with subcategories */}
                       {categories.map((cat) => (
-                        <div key={cat._id} className="group">
-                          <div className="flex items-center">
-                            <Link
-                              to={`/products/${cat._id}`}
-                              className="flex-1 px-3 py-2 text-sm rounded-l hover:bg-neutral-100 font-semibold"
-                              onClick={() => setOpenStrip(false)}
-                            >
-                              {cat.name}
-                            </Link>
-                            {cat.subCategories && cat.subCategories.length > 0 && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setExpandedCategories(prev => {
-                                    const next = new Set(prev);
-                                    if (next.has(cat._id)) {
-                                      next.delete(cat._id);
-                                    } else {
-                                      next.add(cat._id);
-                                    }
-                                    return next;
-                                  });
-                                }}
-                                className="p-2 hover:bg-neutral-100 rounded-r"
-                              >
-                                {expandedCategories.has(cat._id) ? (
-                                  <FiChevronDown className="text-neutral-500" />
-                                ) : (
-                                  <FiChevronRight className="text-neutral-500" />
-                                )}
-                              </button>
-                            )}
-                          </div>
-
-                          {cat.subCategories && cat.subCategories.length > 0 && expandedCategories.has(cat._id) && (
-                            <div className="ml-3 mt-1 border-l-2 border-neutral-100">
-                              {cat.subCategories.map((sub) => (
-                                <Link
-                                  key={sub._id}
-                                  to={`/products/${cat._id}?sub=${sub._id}`}
-                                  className="block px-3 py-1.5 text-sm rounded hover:bg-neutral-100 text-neutral-700"
-                                  onClick={() => setOpenStrip(false)}
-                                >
-                                  {sub.name}
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <CategoryItem key={cat._id} category={cat} />
                       ))}
                     </div>
                   </div>
                 )}
               </div>
               
-              {/* Secondary Navigation - Scrollable on Mobile */}
-              <nav className="flex-1 overflow-x-auto hide-horizontal-scroll scrollbar-hide ml-4 lg:ml-6">
-                <div className="flex items-center gap-4 lg:gap-6 whitespace-nowrap">
-                  {MENU_ITEMS.map((menu) => (
-                    <Link
-                      key={menu.label}
-                      to={menu.href}
-                      className={`text-xs font-semibold flex-shrink-0 transition-all duration-200 ${
-                        menu.isSpecial 
-                          ? "bg-yellow-400 text-neutral-900 px-3 py-1.5 rounded-sm hover:bg-yellow-500 shadow-md font-bold uppercase tracking-wide"
-                          : "hover:underline text-neutral-100"
-                      }`}
-                    >
-                      {menu.label}
-                    </Link>
-                  ))}
-                </div>
-              </nav>
+              {MENU_ITEMS.map(item => (
+                <Link 
+                  key={item.href} 
+                  to={item.href} 
+                  className={`flex items-center h-full hover:text-black transition-colors relative group ${item.isSpecial ? 'text-amber-600' : ''}`}
+                >
+                  {item.label}
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-black transition-all group-hover:w-full" />
+                </Link>
+              ))}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Search Overlay */}
+      {/* Mobile Sidebar Drawer */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[60] lg:hidden">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute top-0 right-0 w-[85%] max-w-sm h-full bg-white shadow-2xl animate-slideInRight flex flex-col">
+            
+            <div className="flex items-center justify-between p-5 border-b border-neutral-100 bg-neutral-50">
+              <span className="font-bold text-lg text-neutral-900">Menu</span>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-2 bg-white rounded-full shadow-sm text-neutral-500">
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {isAuthenticated && (
+                <div className="mb-6 p-4 bg-neutral-900 rounded-xl text-white shadow-lg">
+                  <p className="text-xs text-neutral-400 mb-1">Signed in as</p>
+                  <p className="font-bold truncate">{user.email}</p>
+                </div>
+              )}
+
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xs font-bold uppercase text-neutral-400 tracking-wider mb-4">Categories</h3>
+                  <div className="space-y-1">
+                    <Link to="/products/all" className="block py-2 text-base font-semibold text-neutral-900" onClick={() => setMobileMenuOpen(false)}>
+                      All Books
+                    </Link>
+                    {categories.map(cat => (
+                      <MobileCategoryItem key={cat._id} category={cat} />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase text-neutral-400 tracking-wider mb-4">Discover</h3>
+                  <div className="space-y-2">
+                    {MENU_ITEMS.map(item => (
+                      <Link 
+                        key={item.href} 
+                        to={item.href} 
+                        className="block py-2 text-base font-medium text-neutral-700 active:text-black"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-neutral-100 bg-neutral-50">
+              {isAuthenticated ? (
+                <button onClick={handleLogout} className="w-full py-3 bg-white border border-neutral-200 rounded-xl font-bold text-red-600 shadow-sm active:scale-95 transition-transform">
+                  Log Out
+                </button>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <Link to="/login" className="py-3 text-center bg-white border border-neutral-200 rounded-xl font-bold text-neutral-800" onClick={() => setMobileMenuOpen(false)}>Login</Link>
+                  <Link to="/register" className="py-3 text-center bg-black text-white rounded-xl font-bold" onClick={() => setMobileMenuOpen(false)}>Sign Up</Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
     </>
   );
