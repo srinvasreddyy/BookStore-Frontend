@@ -8,7 +8,7 @@ import { Link, useNavigate, useLocation } from '@tanstack/react-router';
 
 
 const CheckoutPage = () => {
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [paymentMethod, setPaymentMethod] = useState('upi');
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -53,6 +53,7 @@ const CheckoutPage = () => {
         name: item.book.title,
         quantity: item.quantity,
         price: item.book.price,
+        salePrice: item.book.salePrice, // [FIX] Include salePrice
         deliveryCharge: item.book.deliveryCharge || 0,
         image: item.book.coverImages?.[0] || ''
       }));
@@ -74,10 +75,6 @@ const CheckoutPage = () => {
     } catch (error) {
       console.error('Failed to fetch Razorpay key:', error);
       setRazorpayAvailable(false);
-      // If UPI was selected but now unavailable, switch to COD
-      if (paymentMethod === 'upi') {
-        setPaymentMethod('cod');
-      }
       // Don't show error toast for key fetch failure, just log it
     }
   };
@@ -255,7 +252,12 @@ const CheckoutPage = () => {
     }
   };
 
-  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  // [FIX] Updated subtotal calculation to use salePrice if available
+  const subtotal = cartItems.reduce((acc, item) => {
+    const itemPrice = (item.salePrice && item.salePrice > 0) ? item.salePrice : item.price;
+    return acc + itemPrice * item.quantity;
+  }, 0);
+
   // Calculate total delivery charges from each product
   const totalDeliveryCharges = cartItems.reduce((sum, item) => sum + (item.deliveryCharge * item.quantity), 0);
   const shipping = totalDeliveryCharges;
@@ -380,21 +382,6 @@ const CheckoutPage = () => {
                   </div>
                 </div>
 
-                {/* Cash on Delivery Option */}
-                <div onClick={() => setPaymentMethod('cod')} className={`p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-black ring-2 ring-black' : ' py-2 border-neutral-300 border px-4 hover:border-gray-400'}`}>
-                  <div className="flex items-center">
-                     <input 
-                      type="radio" 
-                      name="paymentMethod" 
-                      value="cod"
-                      checked={paymentMethod === 'cod'}
-                      onChange={() => setPaymentMethod('cod')}
-                      className="h-5 w-5 text-black focus:ring-black  py-2 border-neutral-300 border px-4"
-                    />
-                    <FaMoneyBillWave className="h-6 w-6 ml-4 mr-3 text-gray-600" />
-                    <span className="font-medium text-gray-800">Cash on Delivery</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -421,7 +408,10 @@ const CheckoutPage = () => {
                     {cartItems.map(item => (
                       <div key={item.id} className="flex justify-between text-gray-600">
                         <span>{item.name} (x{item.quantity})</span>
-                        <span className="font-medium">₹{item.price.toFixed(2)}</span>
+                        {/* [FIX] Display effective price */}
+                        <span className="font-medium">
+                            ₹{((item.salePrice && item.salePrice > 0 ? item.salePrice : item.price) * item.quantity).toFixed(2)}
+                        </span>
                       </div>
                     ))}
                   </div>

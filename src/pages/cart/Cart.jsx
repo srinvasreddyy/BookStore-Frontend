@@ -47,6 +47,7 @@ const Cart = () => {
         title: item.book.title,
         author: item.book.author,
         price: item.book.price,
+        salePrice: item.book.salePrice, // [FIX] Include salePrice
         deliveryCharge: item.book.deliveryCharge || 0,
         quantity: item.quantity,
         image: item.book.coverImages?.[0] || '', // Use first cover image
@@ -190,7 +191,12 @@ const Cart = () => {
     return 0;
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // [FIX] Updated subtotal calculation to use salePrice if available
+  const subtotal = cartItems.reduce((sum, item) => {
+    const itemPrice = (item.salePrice && item.salePrice > 0) ? item.salePrice : item.price;
+    return sum + itemPrice * item.quantity;
+  }, 0);
+
   // Calculate total delivery charges from each product
   const totalDeliveryCharges = cartItems.reduce((sum, item) => sum + (item.deliveryCharge * item.quantity), 0);
   const shipping = totalDeliveryCharges;
@@ -249,7 +255,19 @@ const Cart = () => {
                   <div className="flex-grow min-w-0">
                     <h3 className="font-semibold text-sm sm:text-base text-gray-900 truncate">{item.title}</h3>
                     <p className="text-xs sm:text-sm text-gray-600">{item.author}</p>
-                    <p className="text-base sm:text-lg font-bold text-gray-900 mt-1 sm:mt-2">₹{item.price.toFixed(2)}</p>
+                    
+                    {/* [FIX] Price Display Logic */}
+                    <div className="mt-1 sm:mt-2">
+                        {item.salePrice && item.salePrice > 0 ? (
+                            <div className="flex items-center gap-2">
+                                <span className="text-base sm:text-lg font-bold text-gray-900">₹{item.salePrice.toFixed(2)}</span>
+                                <span className="text-xs sm:text-sm text-gray-500 line-through">₹{item.price.toFixed(2)}</span>
+                            </div>
+                        ) : (
+                            <p className="text-base sm:text-lg font-bold text-gray-900">₹{item.price.toFixed(2)}</p>
+                        )}
+                    </div>
+
                     {!item.isAvailable && (
                       <p className="text-xs text-red-600 mt-1">
                         Only {item.availableStock} left in stock
