@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiPhone } from 'react-icons/fi';
 import { apiPost } from '../lib/api';
 import toast from 'react-hot-toast';
-import logo from '../assets/logo.png'; // Adjust path if needed
+import logo from '../assets/logo.png'; 
 
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phoneNumber: '', 
     password: '',
     confirmPassword: '',
   });
@@ -36,11 +37,11 @@ const Register = () => {
       const response = await apiPost('/users/register', {
         fullName: formData.name,
         email: formData.email,
+        phoneNumber: formData.phoneNumber,
         password: formData.password,
       });
       console.log('Registration successful:', response);
       toast.success('Registration successful! Redirecting to login...');
-      // Redirect to login page after successful registration
       setTimeout(() => {
         navigate({ to: '/login' });
       }, 1500);
@@ -88,6 +89,28 @@ const Register = () => {
                   className="appearance-none relative block w-full pl-10 pr-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-black focus:border-black sm:text-sm"
                   placeholder="Full name"
                   value={formData.name}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+             {/* Phone Number */}
+             <div>
+              <label htmlFor="phoneNumber" className="sr-only">
+                Phone Number
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FiPhone className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  type="tel"
+                  required
+                  className="appearance-none relative block w-full pl-10 pr-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-black focus:border-black sm:text-sm"
+                  placeholder="Phone Number"
+                  value={formData.phoneNumber}
                   onChange={handleChange}
                 />
               </div>

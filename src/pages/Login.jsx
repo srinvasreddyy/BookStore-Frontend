@@ -4,7 +4,7 @@ import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { apiPost } from '../lib/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import logo from '../assets/logo.png'; // Adjust path if needed
+import logo from '../assets/logo.png'; 
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -53,8 +53,11 @@ const Login = () => {
           <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
           <p className="mt-2 text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-black hover:text-gray-800">
-              Sign up
+            <Link 
+              to="/register" 
+              className="font-bold text-blue-600 hover:text-blue-800 underline ml-1 text-base"
+            >
+              Sign up now
             </Link>
           </p>
         </div>

@@ -20,6 +20,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as FreeRouteImport } from './routes/free'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -81,6 +82,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChangePasswordRoute = ChangePasswordRouteImport.update({
+  id: '/change-password',
+  path: '/change-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
+  '/change-password': typeof ChangePasswordRoute
   '/checkout': typeof CheckoutRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/free': typeof FreeRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
+  '/change-password': typeof ChangePasswordRoute
   '/checkout': typeof CheckoutRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/free': typeof FreeRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
+  '/change-password': typeof ChangePasswordRoute
   '/checkout': typeof CheckoutRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/free': typeof FreeRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
+    | '/change-password'
     | '/checkout'
     | '/forgot-password'
     | '/free'
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
+    | '/change-password'
     | '/checkout'
     | '/forgot-password'
     | '/free'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/cart'
+    | '/change-password'
     | '/checkout'
     | '/forgot-password'
     | '/free'
@@ -223,6 +235,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   CartRoute: typeof CartRoute
+  ChangePasswordRoute: typeof ChangePasswordRoute
   CheckoutRoute: typeof CheckoutRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FreeRoute: typeof FreeRoute
@@ -317,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/change-password': {
+      id: '/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof ChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cart': {
       id: '/cart'
       path: '/cart'
@@ -359,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CartRoute: CartRoute,
+  ChangePasswordRoute: ChangePasswordRoute,
   CheckoutRoute: CheckoutRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   FreeRoute: FreeRoute,
